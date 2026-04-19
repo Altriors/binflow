@@ -390,3 +390,55 @@ These rules apply to all server code:
 ## Resume Prompt
 
 Copy this into Cursor at the start of every new session:
+
+
+## UI Overhaul Needed (Priority for next session)
+
+The current UI is functional but looks like a basic student project.
+Before building admin pages, redesign the entire frontend first.
+
+Problems to fix:
+- Dashboard stats cards show "—" (not calling /api/admin/stats or citizen stats)
+- Overall design feels generic — needs stronger visual identity
+- Navbar logo emoji (🗑) looks unprofessional, replace with a clean SVG or text mark
+- Cards need more visual weight — better typography hierarchy, stronger stat numbers
+- Status badges are okay but complaint cards need an image thumbnail if imageUrl exists
+- Auth pages are clean but the logo icon needs replacing
+- Color palette is too safe/gray — needs a stronger primary accent
+- Mobile layout not tested yet
+- Empty states and loading states need illustrations or better visual treatment
+- HomePage for citizen should show their real complaint counts from /api/complaints/my
+  (count by status client-side, no new API needed)
+- Admin dashboard stats need to call GET /api/admin/stats on mount
+
+Design direction to aim for:
+- Look at Linear, Vercel dashboard, or Supabase dashboard for inspiration
+- Strong typographic hierarchy (big bold numbers for stats)
+- Subtle colored left-border accents on complaint cards per status color
+- Cleaner navbar with a proper wordmark
+- Pages should feel like a real civic tool, not a student CRUD app
+
+## What Is Done
+- [x] Full stack working end to end
+- [x] Citizen can register, login, submit complaint with image + GPS
+- [x] Complaint saved to MongoDB Atlas, image saved to Cloudinary
+- [x] My Complaints page shows real data with status badges
+- [x] Server: all controllers, middleware, models implemented
+- [x] Seed script working: admin@binflow.com / admin123
+- [x] Git pushed to main
+
+## What Is Next
+- [ ] UI overhaul — redesign global.css and all existing pages (do this FIRST)
+- [ ] Fix citizen dashboard stats (count from /api/complaints/my by status)
+- [ ] Admin dashboard page with real stats + Recharts charts
+- [ ] Admin all complaints page with filters + table
+- [ ] Admin complaint detail page with dispatch truck UI
+- [ ] Admin map page with colored markers
+- [ ] Worker queue page
+- [ ] GET /api/auth/workers route for admin dispatch
+
+## Resume Prompt
+Read PROJECT_MEMORY.md fully before doing anything.
+Check "What Is Next" and start with the first unchecked item.
+Do not touch files marked done unless asked.
+Priority tomorrow: UI overhaul first, then admin pages.
