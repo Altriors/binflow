@@ -1,19 +1,12 @@
-const express = require("express");
-const {
-  getStats,
-  getTrends,
-  getCategoryBreakdown,
-  getWards,
-} = require("../controllers/adminController");
-const { authenticate, requireRole } = require("../middleware/auth");
+const router = require("express").Router();
+const { getStats, getTrends, getCategories, getWards } = require("../controllers/adminController");
+const { verifyToken, requireRole } = require("../middleware/auth");
 
-const router = express.Router();
-
-router.use(authenticate, requireRole("admin"));
+router.use(verifyToken, requireRole("admin"));
 
 router.get("/stats", getStats);
 router.get("/trends", getTrends);
-router.get("/categories", getCategoryBreakdown);
+router.get("/categories", getCategories);
 router.get("/wards", getWards);
 
 module.exports = router;

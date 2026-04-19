@@ -1,23 +1,14 @@
 const path = require("path");
-
-// Load server/.env regardless of current working directory (same as scripts/seedAdmin.js)
-require("dotenv").config({ path: path.join(__dirname, "..", ".env") });
+require("dotenv").config({ path: path.resolve(__dirname, "../.env") });
 
 const app = require("./app");
-const { connectDB } = require("./config/db");
+const connectDB = require("./config/db");
 
-const port = Number(process.env.PORT) || 5000;
+const PORT = process.env.PORT || 5000;
 
 async function start() {
   await connectDB();
-  app.listen(port, () => {
-    // eslint-disable-next-line no-console
-    console.log(`BinFlow API listening on http://localhost:${port}`);
-  });
+  app.listen(PORT, () => console.log(`BinFlow server running on port ${PORT}`));
 }
 
-start().catch((err) => {
-  // eslint-disable-next-line no-console
-  console.error(err);
-  process.exit(1);
-});
+start();

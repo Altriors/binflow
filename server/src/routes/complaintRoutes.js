@@ -1,32 +1,24 @@
-const express = require("express");
+const router = require("express").Router();
 const {
   createComplaint,
   getMyComplaints,
-  listComplaintsAdmin,
-  getMapComplaints,
+  getAllComplaints,
   getComplaintById,
   updateStatus,
   assignComplaint,
+  dispatchComplaint,
+  getMapComplaints,
 } = require("../controllers/complaintController");
-const { authenticate, requireRole } = require("../middleware/auth");
-const { upload } = require("../middleware/upload");
+const { verifyToken, requireRole } = require("../middleware/auth");
+const upload = require("../middleware/upload");
 
-const router = express.Router();
-
-router.post(
-  "/",
-  authenticate,
-  requireRole("citizen"),
-  upload.single("image"),
-  createComplaint
-);
-
-router.get("/my", authenticate, requireRole("citizen"), getMyComplaints);
-router.get("/map", authenticate, getMapComplaints);
-router.get("/", authenticate, requireRole("admin"), listComplaintsAdmin);
-
-router.patch("/:id/status", authenticate, requireRole("admin"), updateStatus);
-router.patch("/:id/assign", authenticate, requireRole("admin"), assignComplaint);
-router.get("/:id", authenticate, getComplaintById);
+router.post("/", verifyToken, requireRole("citizen"), upload.single("image"), createComplaint);
+router.get("/my", verifyToken, requireRole("citizen"), getMyComplaints);
+router.get("/map", verifyToken, requireRole("admin"), getMapComplaints);
+router.get("/", verifyToken, requireRole("admin"), getAllComplaints);
+router.get("/:id", verifyToken, getComplaintById);
+router.patch("/:id/status", verifyToken, requireRole("admin", "worker"), updateStatus);
+router.patch("/:id/assign", verifyToken, requireRole("admin"), assignComplaint);
+router.patch("/:id/dispatch", verifyToken, requireRole("admin"), dispatchComplaint);
 
 module.exports = router;

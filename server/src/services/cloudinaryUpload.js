@@ -1,13 +1,16 @@
-const { configureCloudinary } = require("../config/cloudinary");
+const cloudinary = require("../config/cloudinary");
 
-async function uploadImageBuffer(buffer, mimetype) {
-  const cloudinary = configureCloudinary();
-  const dataUri = `data:${mimetype};base64,${buffer.toString("base64")}`;
-  const result = await cloudinary.uploader.upload(dataUri, {
-    folder: "binflow/complaints",
-    resource_type: "image",
+async function uploadToCloudinary(fileBuffer, mimetype) {
+  return new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      { folder: "binflow", resource_type: "image" },
+      (error, result) => {
+        if (error) return reject(error);
+        resolve(result.secure_url);
+      }
+    );
+    stream.end(fileBuffer);
   });
-  return result.secure_url;
 }
 
-module.exports = { uploadImageBuffer };
+module.exports = { uploadToCloudinary };

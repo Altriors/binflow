@@ -3,126 +3,64 @@ const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 const { sendSuccess, sendError } = require("../utils/response");
 
-const SALT_ROUNDS = 10;
-const JWT_EXPIRES = "7d";
-
 function signToken(user) {
-  const secret = process.env.JWT_SECRET;
-  return jwt.sign({ sub: user._id.toString(), role: user.role }, secret, {
-    expiresIn: JWT_EXPIRES,
-  });
+  return jwt.sign(
+    { _id: user._id, email: user.email, role: user.role, name: user.name },
+    process.env.JWT_SECRET,
+    { expiresIn: "7d" }
+  );
+}
+
+function safeUser(user) {
+  const obj = user.toObject();
+  delete obj.passwordHash;
+  return obj;
 }
 
 async function register(req, res) {
   try {
-    const { name, email, password, phone, ward, role } = req.body;
-
+    const { name, email, password, phone, ward } = req.body;
     if (!name || !email || !password) {
       return sendError(res, "Name, email, and password are required");
     }
+    const existing = await User.findOne({ email });
+    if (existing) return sendError(res, "Email already registered");
 
-    if (typeof password !== "string" || password.length < 6) {
-      return sendError(res, "Password must be at least 6 characters");
-    }
-
-    if (role && role !== "citizen") {
-      return sendError(res, "Only citizen self-registration is allowed");
-    }
-
-    const existing = await User.findOne({ email: email.toLowerCase().trim() });
-    if (existing) {
-      return sendError(res, "Email already registered", 409);
-    }
-
-    const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
-
-    const user = await User.create({
-      name: name.trim(),
-      email: email.toLowerCase().trim(),
-      passwordHash,
-      role: "citizen",
-      phone: phone || "",
-      ward: ward || "",
-    });
-
+    const passwordHash = await bcrypt.hash(password, 10);
+    const user = await User.create({ name, email, passwordHash, phone, ward });
     const token = signToken(user);
-
-    return sendSuccess(
-      res,
-      {
-        user: {
-          id: user._id,
-          name: user.name,
-          email: user.email,
-          role: user.role,
-          phone: user.phone,
-          ward: user.ward,
-        },
-        token,
-      },
-      "Registered successfully",
-      201
-    );
-  } catch (err) {
-    return sendError(res, err.message || "Registration failed", 500);
+    return sendSuccess(res, { token, user: safeUser(user) }, "Registration successful", 201);
+  } catch (error) {
+    return sendError(res, error.message, 500);
   }
 }
 
 async function login(req, res) {
   try {
     const { email, password } = req.body;
-    if (!email || !password) {
-      return sendError(res, "Email and password are required");
-    }
+    if (!email || !password) return sendError(res, "Email and password are required");
 
-    const user = await User.findOne({ email: email.toLowerCase().trim() }).select(
-      "+passwordHash"
-    );
-    if (!user) {
-      return sendError(res, "Invalid credentials", 401);
-    }
+    const user = await User.findOne({ email });
+    if (!user) return sendError(res, "Invalid credentials", 401);
 
-    const ok = await bcrypt.compare(password, user.passwordHash);
-    if (!ok) {
-      return sendError(res, "Invalid credentials", 401);
-    }
+    const match = await user.comparePassword(password);
+    if (!match) return sendError(res, "Invalid credentials", 401);
 
     const token = signToken(user);
-
-    return sendSuccess(res, {
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        phone: user.phone,
-        ward: user.ward,
-      },
-      token,
-    });
-  } catch (err) {
-    return sendError(res, err.message || "Login failed", 500);
+    return sendSuccess(res, { token, user: safeUser(user) }, "Login successful");
+  } catch (error) {
+    return sendError(res, error.message, 500);
   }
 }
 
-async function me(req, res) {
+async function getMe(req, res) {
   try {
-    const user = await User.findById(req.user.id);
-    if (!user) {
-      return sendError(res, "User not found", 404);
-    }
-
-    return sendSuccess(res, {
-      id: user._id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-      phone: user.phone,
-      ward: user.ward,
-    });
-  } catch (err) {
-    return sendError(res, err.message || "Failed to load profile", 500);
+    const user = await User.findById(req.user._id).select("-passwordHash");
+    if (!user) return sendError(res, "User not found", 404);
+    return sendSuccess(res, user, "User fetched");
+  } catch (error) {
+    return sendError(res, error.message, 500);
   }
 }
 
-module.exports = { register, login, me };
+module.exports = { register, login, getMe };

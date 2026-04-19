@@ -1,23 +1,16 @@
 const jwt = require("jsonwebtoken");
 const { sendError } = require("../utils/response");
 
-function authenticate(req, res, next) {
+function verifyToken(req, res, next) {
+  const header = req.headers.authorization;
+  if (!header || !header.startsWith("Bearer ")) {
+    return sendError(res, "No token provided", 401);
+  }
+  const token = header.split(" ")[1];
   try {
-    const header = req.headers.authorization || "";
-    const token = header.startsWith("Bearer ") ? header.slice(7) : null;
-
-    if (!token) {
-      return sendError(res, "No token provided", 401);
-    }
-
-    const secret = process.env.JWT_SECRET;
-    if (!secret) {
-      return sendError(res, "Server misconfiguration", 500);
-    }
-
-    const payload = jwt.verify(token, secret);
-    req.user = { id: payload.sub, role: payload.role };
-    return next();
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = decoded;
+    next();
   } catch {
     return sendError(res, "Invalid or expired token", 401);
   }
@@ -25,14 +18,11 @@ function authenticate(req, res, next) {
 
 function requireRole(...roles) {
   return (req, res, next) => {
-    if (!req.user) {
-      return sendError(res, "Unauthorized", 401);
+    if (!req.user || !roles.includes(req.user.role)) {
+      return sendError(res, "Access denied", 403);
     }
-    if (!roles.includes(req.user.role)) {
-      return sendError(res, "Forbidden", 403);
-    }
-    return next();
+    next();
   };
 }
 
-module.exports = { authenticate, requireRole };
+module.exports = { verifyToken, requireRole };

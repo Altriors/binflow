@@ -3,43 +3,27 @@ const { sendSuccess, sendError } = require("../utils/response");
 
 async function getStats(req, res) {
   try {
-    const [total, byStatus, byCategory] = await Promise.all([
+    const [total, reported, assigned, in_progress, resolved, closed] = await Promise.all([
       Complaint.countDocuments(),
-      Complaint.aggregate([
-        { $group: { _id: "$status", count: { $sum: 1 } } },
-      ]),
-      Complaint.aggregate([
-        { $group: { _id: "$category", count: { $sum: 1 } } },
-      ]),
+      Complaint.countDocuments({ status: "reported" }),
+      Complaint.countDocuments({ status: "assigned" }),
+      Complaint.countDocuments({ status: "in_progress" }),
+      Complaint.countDocuments({ status: "resolved" }),
+      Complaint.countDocuments({ status: "closed" }),
     ]);
-
-    const statusMap = Object.fromEntries(byStatus.map((x) => [x._id, x.count]));
-    const open =
-      (statusMap.reported || 0) +
-      (statusMap.assigned || 0) +
-      (statusMap.in_progress || 0);
-
-    return sendSuccess(res, {
-      total,
-      open,
-      resolved: (statusMap.resolved || 0) + (statusMap.closed || 0),
-      byStatus: statusMap,
-      byCategory: Object.fromEntries(byCategory.map((x) => [x._id, x.count])),
-    });
-  } catch (err) {
-    return sendError(res, err.message || "Could not load stats", 500);
+    return sendSuccess(res, { total, reported, assigned, in_progress, resolved, closed }, "Stats fetched");
+  } catch (error) {
+    return sendError(res, error.message, 500);
   }
 }
 
 async function getTrends(req, res) {
   try {
-    const days = Math.min(parseInt(req.query.days, 10) || 30, 90);
-    const start = new Date();
-    start.setDate(start.getDate() - days);
-    start.setHours(0, 0, 0, 0);
+    const since = new Date();
+    since.setDate(since.getDate() - 30);
 
-    const rows = await Complaint.aggregate([
-      { $match: { createdAt: { $gte: start } } },
+    const trends = await Complaint.aggregate([
+      { $match: { createdAt: { $gte: since } } },
       {
         $group: {
           _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
@@ -47,43 +31,40 @@ async function getTrends(req, res) {
         },
       },
       { $sort: { _id: 1 } },
+      { $project: { date: "$_id", count: 1, _id: 0 } },
     ]);
 
-    return sendSuccess(res, { points: rows.map((r) => ({ date: r._id, count: r.count })) });
-  } catch (err) {
-    return sendError(res, err.message || "Could not load trends", 500);
+    return sendSuccess(res, trends, "Trends fetched");
+  } catch (error) {
+    return sendError(res, error.message, 500);
   }
 }
 
-async function getCategoryBreakdown(req, res) {
+async function getCategories(req, res) {
   try {
-    const rows = await Complaint.aggregate([
+    const categories = await Complaint.aggregate([
       { $group: { _id: "$category", count: { $sum: 1 } } },
+      { $project: { category: "$_id", count: 1, _id: 0 } },
       { $sort: { count: -1 } },
     ]);
-
-    return sendSuccess(res, {
-      items: rows.map((r) => ({ category: r._id, count: r.count })),
-    });
-  } catch (err) {
-    return sendError(res, err.message || "Could not load categories", 500);
+    return sendSuccess(res, categories, "Categories fetched");
+  } catch (error) {
+    return sendError(res, error.message, 500);
   }
 }
 
 async function getWards(req, res) {
   try {
-    const rows = await Complaint.aggregate([
-      { $match: { ward: { $nin: [null, ""] } } },
+    const wards = await Complaint.aggregate([
+      { $match: { ward: { $ne: null, $ne: "" } } },
       { $group: { _id: "$ward", count: { $sum: 1 } } },
+      { $project: { ward: "$_id", count: 1, _id: 0 } },
       { $sort: { count: -1 } },
     ]);
-
-    return sendSuccess(res, {
-      items: rows.map((r) => ({ ward: r._id, count: r.count })),
-    });
-  } catch (err) {
-    return sendError(res, err.message || "Could not load wards", 500);
+    return sendSuccess(res, wards, "Wards fetched");
+  } catch (error) {
+    return sendError(res, error.message, 500);
   }
 }
 
-module.exports = { getStats, getTrends, getCategoryBreakdown, getWards };
+module.exports = { getStats, getTrends, getCategories, getWards };
