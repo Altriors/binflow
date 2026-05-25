@@ -26,7 +26,7 @@ with no accountability, no location intelligence, and no status tracking.
 
 | Layer | Choice |
 |---|---|
-| Frontend | React + Vite, React Router, Axios, React-Leaflet, Recharts, react-hot-toast |
+| Frontend | React + Vite, React Router, Axios, React-Leaflet, Recharts, react-hot-toast, framer-motion, react-countup |
 | Backend | Node.js, Express.js |
 | Database | MongoDB Atlas + Mongoose |
 | Auth | JWT (jsonwebtoken) + bcryptjs |
@@ -57,8 +57,23 @@ D:\PROJECTS\binflow
 │       │   ├── ProtectedRoute.jsx
 │       │   ├── PublicOnlyRoute.jsx
 │       │   ├── MapPicker.jsx
+│       │   ├── ComplaintMap.jsx
 │       │   ├── StatusBadge.jsx
-│       │   └── TruckAnimation.jsx
+│       │   ├── TruckAnimation.jsx
+│       │   ├── map/
+│       │   │   ├── MapInvalidateSize.jsx
+│       │   │   └── MapLoader.jsx
+│       │   └── citizen/
+│       │       ├── CitizenShell.jsx
+│       │       ├── AnimatedCard.jsx
+│       │       ├── AnimatedButton.jsx
+│       │       ├── AnimatedCounter.jsx
+│       │       ├── PageTransition.jsx
+│       │       ├── FloatingBackground.jsx
+│       │       └── SuccessModal.jsx
+│       ├── utils
+│       │   ├── geolocation.js
+│       │   └── leafletIcons.js
 │       ├── context
 │       │   └── AuthContext.jsx
 │       ├── pages
@@ -79,8 +94,13 @@ D:\PROJECTS\binflow
 │       │   ├── api.js
 │       │   └── complaints.js
 │       └── styles
-│           └── global.css
+│           ├── global.css
+│           └── citizen.css
 └── server
+    ├── scripts/
+    │   ├── seedAdmin.js
+    │   ├── seedWorker.js
+    │   └── fixMongoUri.js
     └── src
         ├── config
         │   ├── db.js
@@ -169,6 +189,9 @@ npm run seed:admin
 # Seed worker account (run only once, for dispatch E2E testing)
 npm run seed:worker
 # Creates: worker@binflow.com / worker123
+
+# If MongoDB fails with querySrv ECONNREFUSED (Windows):
+npm run mongo:fix-uri
 ```
 
 - Backend runs on: http://localhost:5000
@@ -244,8 +267,8 @@ GET    /api/complaints/my               citizen, own complaints
 GET    /api/complaints/assigned         worker, active jobs (assigned + in_progress)
 GET    /api/complaints/map              admin, lat+lng+status+category only
 GET    /api/complaints                  admin, filters: status,category,ward,from,to
-GET    /api/complaints/:id              citizen + admin
-PATCH  /api/complaints/:id/status       admin + worker
+GET    /api/complaints/:id              citizen (own), admin, worker (assigned only)
+PATCH  /api/complaints/:id/status       admin + worker (in_progress / resolved only)
 PATCH  /api/complaints/:id/assign       admin
 PATCH  /api/complaints/:id/dispatch     admin, truck dispatch
 
@@ -291,11 +314,6 @@ Every status change creates a StatusLog entry.
 8. Worker sees complaint in their queue with coordinates to navigate to
 9. Worker updates to "in_progress" when arrived, "resolved" when done
 
-**Customer geolocation (`utils/geolocation.js`):**
-- Tries fast GPS (low accuracy) → `watchPosition` → high accuracy → IP approximate fallback
-- Avoids starting with `enableHighAccuracy` (common Windows/desktop timeout cause)
-- MapPicker uses this helper; tap map always works as manual fallback
-
 **Truck animation UX:**
 - On "Dispatch Truck" submit, overlay opens immediately with `autoStart` (no manual button)
 - Phases: arriving → loading → leaving → done, then overlay closes
@@ -303,6 +321,28 @@ Every status change creates a StatusLog entry.
 **Complaint model additions for this feature:**
 - dispatchNote: String
 - estimatedArrival: String
+
+---
+
+## Customer Map & Geolocation (critical fixes)
+
+**MapPicker** (`/complaints/new`) — citizen pin map. Admin/worker maps use `ComplaintMap.jsx` directly.
+
+| Issue | Cause | Fix |
+|---|---|---|
+| Grey map, no tiles | Leaflet `invalidateSize` not called inside animated/overflow parents | `MapInvalidateSize.jsx`, delayed mount, explicit `.map-picker-body` height |
+| Coords show `0.00000, 0.00000` | `parseCoords("", "")` → `Number("")` === 0 | `parseCoords` rejects empty strings and 0,0 |
+| "Use my location" timeout | `enableHighAccuracy: true` first on Windows desktop | `utils/geolocation.js` multi-step + IP fallback |
+
+**Geolocation order** (`client/src/utils/geolocation.js`):
+1. `getCurrentPosition` — low accuracy, cached OK (fast on desktop)
+2. `watchPosition` — first fix (works when getCurrentPosition hangs)
+3. `getCurrentPosition` — high accuracy, longer timeout
+4. IP approximate fallback (ipapi.co / ip-api.com) + info toast to refine on map
+
+**Manual fallback:** always click/tap map to pin — required for submit if GPS fails.
+
+**Worker navigate:** `ComplaintMap` + Google Maps directions URL on queue cards and job detail.
 
 ---
 
@@ -350,22 +390,26 @@ requireRole(...roles)
 | ComplaintMap.jsx | Read-only map + Google Maps Navigate link | done |
 | StatusBadge.jsx | Colored pill for status and priority | done |
 | TruckAnimation.jsx | Full-screen truck animation on dispatch (autoStart) | done |
+| map/MapInvalidateSize.jsx | Fixes blank Leaflet tiles after layout/animation | done |
+| map/MapLoader.jsx | Shimmer while map initializes | done |
+| citizen/* | Framer Motion shell, cards, success modal, floating bg | done |
 
 ---
 
-## CSS Design System (global.css)
+## CSS Design System
 
-Key CSS variables:
+**Files:** `global.css` (base + admin/worker) + `citizen.css` (citizen premium layer). No Tailwind.
+
+Key CSS variables (global.css):
 ```
---color-primary: #4f7ef8
---color-bg: #f8f9fa
+--color-primary: #059669
+--color-bg: #e8f5ec
 --color-surface: #ffffff
---color-border: #e0e3e8
---color-text: #1a1d23
---color-text-muted: #6b7280
+--gradient-brand: teal → emerald → sky
 --radius-lg: 16px
---shadow-md: 0 4px 12px rgba(0,0,0,0.08)
+--shadow-md / --shadow-card-hover
 ```
+Font: **Plus Jakarta Sans** (loaded in index.html).
 
 Key utility classes:
 ```
@@ -398,7 +442,23 @@ Key utility classes:
 |---|---|
 | CSS build error: unclosed bracket in .form-select | Replaced %3E/%3C encoded SVG with raw < > in data URL |
 | MapPicker build error: default export not found | File was not saved correctly, re-created with export default |
-| Leaflet marker icon broken in Vite | delete L.Icon.Default.prototype._getIconUrl + mergeOptions with unpkg URLs |
+| Leaflet marker icon broken in Vite | `utils/leafletIcons.js` — shared icon fix + pulse marker |
+| Customer map blank / grey tiles | `MapInvalidateSize` + map in separate `card-map-panel` (overflow visible) |
+| Geolocation timeout on Windows | `utils/geolocation.js` — low accuracy first, watchPosition, IP fallback |
+| MongoDB querySrv ECONNREFUSED | `npm run mongo:fix-uri` converts mongodb+srv → mongodb:// in .env |
+
+---
+
+## Project Status (MVP)
+
+**Complete end-to-end:** citizen reports → admin dispatches → worker resolves. All three roles have dashboards, maps (where needed), and auth.
+
+**Test accounts:**
+| Role | Email | Password |
+|---|---|---|
+| Admin | admin@binflow.com | admin123 |
+| Worker | worker@binflow.com | worker123 |
+| Citizen | register at /register | — |
 
 ---
 
@@ -478,15 +538,21 @@ Use this checklist after any dispatch/worker changes:
 - [x] Full stack working end to end — citizen flow confirmed
 - [x] Complaint saved to MongoDB Atlas, image saved to Cloudinary
 - [x] Git pushed to main
+- [x] Three-role E2E flow (citizen → admin dispatch → worker queue)
+- [x] GET /api/auth/workers + GET /api/complaints/assigned
+- [x] Customer map tile rendering + parseCoords fix
+- [x] Geolocation helper (GPS + watchPosition + IP fallback)
+- [x] Citizen UI: framer-motion, citizen.css, SuccessModal, AnimatedCard/Counter
+- [x] Worker Google Maps navigate buttons
+- [x] Windows MongoDB fix script (mongo:fix-uri)
 
-## What Is Next (Phase 2)
+## What Is Next (Phase 2 — optional enhancements)
 
-- [ ] Duplicate detection — on citizen submit, haversine check ~100–200 m for open complaints; link or message instead of duplicate
-- [ ] SLA escalation — node-cron every few hours; bump priority to high if reported/assigned > 48h
+- [ ] Duplicate detection — haversine ~100–200 m on citizen submit
+- [ ] SLA escalation — node-cron; priority → high if reported/assigned > 48h
 - [ ] Notifications collection
-- [x] UI refresh — mesh background, glass cards, gradient buttons, hero landing, role chips
-- [ ] Mobile layout pass and testing
-- [ ] Worker resolution proof photo upload (optional enhancement)
+- [ ] Mobile layout pass and device testing
+- [ ] Worker resolution proof photo upload
 
 ---
 
