@@ -325,3 +325,11 @@ Commit format: `feat:` / `fix:` / `style:` / `refactor:` / `chore:`
 - JWT tokens expire in 7 days
 - Images are stored on Cloudinary via multer memory storage
 - Leaflet marker icons are fixed via `utils/leafletIcons.js` — import this before rendering any map
+
+## How this was built
+
+-This project was built with AI assistance throughout — Cursor as the editor, with Claude and ChatGPT used for code generation, debugging, and design decisions.
+
+-Every feature was reviewed, tested, and integrated manually. The architecture decisions, project structure, database schema, and overall direction were defined by us — the AI tools handled the implementation speed.
+
+-This is increasingly how software gets built, and we're not hiding it.
