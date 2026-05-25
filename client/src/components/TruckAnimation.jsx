@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 
-export default function TruckAnimation({ onComplete }) {
-  const [phase, setPhase] = useState("idle");
+export default function TruckAnimation({ onComplete, autoStart = false }) {
+  const [phase, setPhase] = useState(autoStart ? "arriving" : "idle");
   // phases: idle → arriving → loading → leaving → done
 
   useEffect(() => {

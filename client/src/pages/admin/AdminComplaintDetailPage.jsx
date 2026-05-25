@@ -85,15 +85,16 @@ export default function AdminComplaintDetailPage() {
   async function handleDispatch(e) {
     e.preventDefault();
     if (!dispatchForm.workerId) { toast.error("Please select a worker."); return; }
+    setShowTruck(true);
     try {
       setDispatching(true);
       const res = await api.patch(`/complaints/${id}/dispatch`, dispatchForm);
       if (res.data?.success) {
         setComplaint(res.data.data);
         toast.success("🚛 Truck dispatched!");
-        setShowTruck(true);
       }
     } catch {
+      setShowTruck(false);
       toast.error("Could not dispatch.");
     } finally {
       setDispatching(false);
@@ -112,7 +113,7 @@ export default function AdminComplaintDetailPage() {
   return (
     <div className="page-wrapper">
       {showTruck && (
-        <TruckAnimation onComplete={() => setShowTruck(false)} />
+        <TruckAnimation autoStart onComplete={() => setShowTruck(false)} />
       )}
 
       {/* Header */}
@@ -260,7 +261,7 @@ export default function AdminComplaintDetailPage() {
                   onChange={e => setDispatchForm(f => ({ ...f, workerId: e.target.value }))} required>
                   <option value="">Select a worker...</option>
                   {workers.map(w => (
-                    <option key={w._id} value={w._id}>{w.name} — {w.email}</option>
+                    <option key={w.id} value={w.id}>{w.name}</option>
                   ))}
                   {workers.length === 0 && (
                     <option disabled>No workers registered yet</option>

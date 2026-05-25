@@ -2,6 +2,7 @@ const router = require("express").Router();
 const {
   createComplaint,
   getMyComplaints,
+  getAssignedComplaints,
   getAllComplaints,
   getComplaintById,
   updateStatus,
@@ -14,6 +15,7 @@ const upload = require("../middleware/upload");
 
 router.post("/", verifyToken, requireRole("citizen"), upload.single("image"), createComplaint);
 router.get("/my", verifyToken, requireRole("citizen"), getMyComplaints);
+router.get("/assigned", verifyToken, requireRole("worker"), getAssignedComplaints);
 router.get("/map", verifyToken, requireRole("admin"), getMapComplaints);
 router.get("/", verifyToken, requireRole("admin"), getAllComplaints);
 router.get("/:id", verifyToken, getComplaintById);

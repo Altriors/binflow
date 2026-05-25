@@ -1,5 +1,6 @@
 import React from "react";
 import "./styles/global.css";
+import "./styles/citizen.css";
 import ReactDOM from "react-dom/client";
 import "leaflet/dist/leaflet.css";
 import { BrowserRouter } from "react-router-dom";

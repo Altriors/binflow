@@ -58,9 +58,9 @@ export default function AdminDashboard() {
 
   return (
     <div className="page-wrapper">
-      <div className="page-header animate-fade-in" style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", flexWrap: "wrap", gap: "1rem" }}>
+      <div className="page-header page-header-dashboard animate-fade-in" style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", flexWrap: "wrap", gap: "1rem" }}>
         <div>
-          <h2>Admin Dashboard</h2>
+          <h2 className="page-title">Admin Dashboard</h2>
           <p>Real-time overview of all complaints across the city.</p>
         </div>
         <div style={{ display: "flex", gap: "0.5rem" }}>

@@ -11,8 +11,9 @@ router.get("/me", verifyToken, getMe);
 // Workers list for admin dispatch
 router.get("/workers", verifyToken, requireRole("admin"), async (req, res) => {
   try {
-    const workers = await User.find({ role: "worker" }).select("-passwordHash");
-    return sendSuccess(res, workers, "Workers fetched");
+    const workers = await User.find({ role: "worker" }).select("name").lean();
+    const list = workers.map((w) => ({ id: w._id, name: w.name }));
+    return sendSuccess(res, list, "Workers fetched");
   } catch (err) {
     return sendError(res, err.message, 500);
   }

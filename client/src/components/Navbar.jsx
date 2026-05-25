@@ -1,11 +1,20 @@
+import { useEffect, useState } from "react";
 import { NavLink, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 export default function Navbar() {
   const { isAuthenticated, user, logout } = useAuth();
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 12);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   return (
-    <nav className="navbar">
+    <nav className={`navbar${scrolled ? " navbar-scrolled" : ""}`}>
       <div className="navbar-inner">
         <Link to="/" className="navbar-brand">
           <div className="navbar-logo-mark">
@@ -55,6 +64,12 @@ export default function Navbar() {
                 </>
               )}
 
+              {user?.role === "worker" && (
+                <NavLink to="/worker" className={({ isActive }) => "nav-link" + (isActive ? " active" : "")}>
+                  My Queue
+                </NavLink>
+              )}
+
               <div className="navbar-divider" />
 
               <div className="navbar-user-pill">
@@ -62,6 +77,7 @@ export default function Navbar() {
                   {user?.name?.[0]?.toUpperCase() || "U"}
                 </span>
                 <span>{user?.name?.split(" ")[0]}</span>
+                <span className={`role-chip role-${user?.role}`}>{user?.role}</span>
               </div>
 
               <button className="btn btn-ghost btn-sm" onClick={logout}>

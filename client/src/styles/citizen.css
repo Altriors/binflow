@@ -1,0 +1,375 @@
+/* Citizen premium layer — extends global.css, does not replace it */
+
+.citizen-shell {
+  position: relative;
+  min-height: calc(100vh - 62px);
+}
+
+.citizen-page {
+  position: relative;
+  z-index: 2;
+}
+
+/* Floating ambient background */
+.citizen-float-bg {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.citizen-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(70px);
+  opacity: 0.45;
+}
+.citizen-blob-1 {
+  width: 380px;
+  height: 380px;
+  background: rgba(5, 150, 105, 0.35);
+  top: 8%;
+  right: -5%;
+  animation: citizenBlobDrift 16s ease-in-out infinite;
+}
+.citizen-blob-2 {
+  width: 300px;
+  height: 300px;
+  background: rgba(14, 165, 233, 0.28);
+  bottom: 12%;
+  left: -4%;
+  animation: citizenBlobDrift 20s ease-in-out infinite reverse;
+}
+.citizen-blob-3 {
+  width: 200px;
+  height: 200px;
+  background: rgba(16, 185, 129, 0.25);
+  top: 45%;
+  left: 40%;
+  animation: citizenBlobDrift 12s ease-in-out infinite 2s;
+}
+
+.citizen-particle {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  opacity: 0.35;
+  animation: citizenParticleFloat 8s ease-in-out infinite;
+}
+.citizen-particle-1 { top: 20%; left: 15%; animation-delay: 0s; }
+.citizen-particle-2 { top: 60%; right: 20%; animation-delay: 2s; }
+.citizen-particle-3 { bottom: 25%; left: 55%; animation-delay: 4s; }
+
+@keyframes citizenBlobDrift {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(-20px, 24px) scale(1.08); }
+}
+@keyframes citizenParticleFloat {
+  0%, 100% { transform: translateY(0); opacity: 0.2; }
+  50% { transform: translateY(-24px); opacity: 0.55; }
+}
+
+/* Map picker — customer fix */
+.map-picker-premium {
+  position: relative;
+  z-index: 5;
+  isolation: isolate;
+}
+
+.map-picker-body {
+  position: relative;
+  width: 100%;
+  min-height: 280px;
+  background: #dce8e0;
+  overflow: hidden;
+}
+
+.map-picker-body .leaflet-container,
+.map-picker-leaflet {
+  height: 100% !important;
+  width: 100% !important;
+  min-height: 280px;
+  z-index: 2;
+  font-family: var(--font);
+  background: #e2ebe4;
+}
+
+.map-picker-body .leaflet-tile-pane {
+  filter: saturate(1.05) contrast(1.02);
+}
+
+.map-loader {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  background: linear-gradient(135deg, #ecfdf5, #e0f2fe);
+  color: var(--color-text-muted);
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.map-loader-shimmer {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.5) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+}
+
+.map-loader-pin {
+  font-size: 2rem;
+  animation: floatIcon 2s ease-in-out infinite;
+  z-index: 1;
+}
+
+.map-picker-coords-empty {
+  color: var(--color-text-light) !important;
+  background: var(--color-bg) !important;
+  font-weight: 500 !important;
+}
+
+.map-picker-coords-live {
+  animation: popIn 0.35s ease both;
+}
+
+.map-picker-locate-btn:not(:disabled):hover {
+  box-shadow: 0 0 0 3px var(--color-primary-glow);
+}
+
+/* Pulse marker */
+.pulse-marker-wrap {
+  background: transparent !important;
+  border: none !important;
+}
+
+.pulse-marker {
+  position: relative;
+  width: 32px;
+  height: 32px;
+}
+
+.pulse-marker-core {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%);
+  width: 14px;
+  height: 14px;
+  background: var(--color-primary);
+  border: 3px solid #fff;
+  border-radius: 50% 50% 50% 0;
+  transform: translateX(-50%) rotate(-45deg);
+  box-shadow: 0 4px 12px rgba(5, 150, 105, 0.45);
+  z-index: 2;
+}
+
+.pulse-marker-ring {
+  position: absolute;
+  left: 50%;
+  bottom: 2px;
+  transform: translateX(-50%);
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(5, 150, 105, 0.35);
+  animation: markerRipple 1.8s ease-out infinite;
+}
+
+@keyframes markerRipple {
+  0% { transform: translateX(-50%) scale(0.4); opacity: 0.9; }
+  100% { transform: translateX(-50%) scale(2.2); opacity: 0; }
+}
+
+.leaflet-popup.map-picker-popup .leaflet-popup-content-wrapper {
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  font-size: 0.85rem;
+}
+
+/* Form card — allow map tiles to render */
+.card.complaint-form-card,
+.card.card-map-panel {
+  overflow: visible;
+}
+
+.card.complaint-form-card::before,
+.card.card-map-panel::before {
+  opacity: 1;
+}
+
+.card-map-panel {
+  margin-top: 1rem;
+  padding: 1.25rem;
+}
+
+/* Citizen stat cards */
+.citizen-stat-grid .stat-card {
+  background: var(--color-surface-glass);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+}
+
+.citizen-stat-grid .stat-card-value {
+  background: var(--gradient-brand);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.stat-live-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  margin-right: 0.35rem;
+  animation: blink 1.5s ease-in-out infinite;
+  vertical-align: middle;
+}
+
+/* Premium complaint cards */
+.citizen-complaint-card {
+  cursor: default;
+  background: var(--color-surface-glass);
+  backdrop-filter: blur(10px);
+}
+
+.citizen-complaint-card .complaint-card-title {
+  font-size: 1.05rem;
+}
+
+.citizen-complaint-card:hover {
+  border-color: rgba(5, 150, 105, 0.45);
+  box-shadow: 0 20px 48px rgba(5, 80, 50, 0.14);
+}
+
+/* Success modal */
+.success-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(10, 22, 16, 0.55);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+}
+
+.success-modal {
+  background: var(--color-surface);
+  border-radius: var(--radius-xl);
+  padding: 2rem 1.75rem;
+  max-width: 400px;
+  width: 100%;
+  text-align: center;
+  box-shadow: var(--shadow-lg);
+  position: relative;
+  overflow: hidden;
+}
+
+.success-modal-icon {
+  width: 72px;
+  height: 72px;
+  margin: 0 auto 1rem;
+  border-radius: 50%;
+  background: var(--gradient-brand);
+  color: #fff;
+  font-size: 2rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-green);
+}
+
+.success-modal h3 {
+  margin-bottom: 0.5rem;
+  color: var(--color-text);
+}
+
+.success-modal p {
+  margin-bottom: 1.25rem;
+  font-size: 0.92rem;
+}
+
+.success-confetti {
+  position: absolute;
+  top: 30%;
+  left: 50%;
+  transform: translateX(-50%);
+  pointer-events: none;
+  font-size: 1.25rem;
+}
+
+/* Navbar scroll (citizen) */
+.navbar.navbar-scrolled {
+  box-shadow: 0 8px 32px rgba(5, 80, 50, 0.1);
+  background: rgba(255, 255, 255, 0.96);
+}
+
+/* Quick action pills */
+.citizen-action-grid {
+  display: flex;
+  gap: 0.85rem;
+  flex-wrap: wrap;
+}
+
+.citizen-action-card {
+  flex: 1;
+  min-width: 160px;
+  padding: 1.1rem 1.25rem;
+  border-radius: var(--radius-lg);
+  background: var(--gradient-surface);
+  border: 1px solid var(--color-border);
+  text-decoration: none;
+  color: inherit;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  transition: border-color var(--transition-md), box-shadow var(--transition-md);
+  box-shadow: var(--shadow-sm);
+}
+
+.citizen-action-card:hover {
+  text-decoration: none;
+  border-color: var(--color-primary);
+  box-shadow: var(--shadow-green);
+}
+
+.citizen-action-card-icon {
+  font-size: 1.75rem;
+}
+
+.citizen-action-card strong {
+  display: block;
+  font-size: 0.95rem;
+  color: var(--color-text);
+}
+
+.citizen-action-card span {
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+}
+
+@media (max-width: 640px) {
+  .map-picker-body {
+    min-height: 260px;
+  }
+  .citizen-action-card {
+    min-width: 100%;
+  }
+}

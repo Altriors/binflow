@@ -37,9 +37,9 @@ export default function AdminMapPage() {
 
   return (
     <div className="page-wrapper">
-      <div className="page-header animate-fade-in" style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", flexWrap: "wrap", gap: "1rem" }}>
+      <div className="page-header page-header-dashboard animate-fade-in" style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", flexWrap: "wrap", gap: "1rem" }}>
         <div>
-          <h2>Map Intelligence</h2>
+          <h2 className="page-title">Map Intelligence</h2>
           <p>{visible.length} complaints shown · click any marker for details</p>
         </div>
         <Link to="/admin" className="btn btn-secondary btn-sm">← Dashboard</Link>

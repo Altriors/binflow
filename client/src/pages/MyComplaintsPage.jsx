@@ -1,8 +1,11 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { motion } from "framer-motion";
 import toast from "react-hot-toast";
 import { getMyComplaints } from "../services/complaints";
 import StatusBadge from "../components/StatusBadge";
+import CitizenShell from "../components/citizen/CitizenShell";
+import AnimatedCard, { StaggerGrid } from "../components/citizen/AnimatedCard";
 
 function formatDate(v) {
   if (!v) return "-";
@@ -36,33 +39,57 @@ export default function MyComplaintsPage() {
     load();
   }, []);
 
-  if (loading) return <div className="loading-spinner">Loading complaints...</div>;
+  if (loading) {
+    return (
+      <CitizenShell>
+        <div className="loading-spinner">Loading complaints…</div>
+      </CitizenShell>
+    );
+  }
 
   return (
-    <div className="page-wrapper">
+    <CitizenShell>
       <div className="section-header animate-fade-in">
-        <div>
-          <h2>My Complaints</h2>
+        <motion.div
+          className="page-header-dashboard"
+          style={{ flex: 1, marginBottom: 0 }}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          <h2 className="page-title">My Complaints</h2>
           <p className="text-sm text-muted" style={{ marginTop: "0.2rem" }}>
             {items.length} complaint{items.length !== 1 ? "s" : ""} submitted
           </p>
-        </div>
-        <Link to="/complaints/new" className="btn btn-primary btn-sm">+ Report Issue</Link>
+        </motion.div>
+        <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+          <Link to="/complaints/new" className="btn btn-primary btn-sm">
+            + Report Issue
+          </Link>
+        </motion.div>
       </div>
 
       {items.length === 0 ? (
-        <div className="empty-state">
+        <motion.div
+          className="empty-state card"
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+        >
           <span className="empty-state-icon">📭</span>
           <h3>No complaints yet</h3>
           <p>You haven't submitted any complaints yet.</p>
-          <Link to="/complaints/new" className="btn btn-primary" style={{ marginTop: "1.25rem" }}>
+          <Link to="/complaints/new" className="btn btn-primary btn-glow" style={{ marginTop: "1.25rem" }}>
             Report your first issue
           </Link>
-        </div>
+        </motion.div>
       ) : (
-        <div className="card-grid stagger">
-          {items.map((item) => (
-            <article key={item._id} className="complaint-card">
+        <StaggerGrid className="card-grid">
+          {items.map((item, i) => (
+            <AnimatedCard
+              key={item._id}
+              className="complaint-card citizen-complaint-card"
+              delay={i * 0.05}
+              as="article"
+            >
               <div className={`complaint-card-accent accent-${item.status}`} />
 
               {item.imageUrl && (
@@ -77,14 +104,13 @@ export default function MyComplaintsPage() {
                   <StatusBadge status={item.status} />
                 </div>
 
-                {item.description && (
-                  <p className="complaint-card-desc">{item.description}</p>
-                )}
+                {item.description && <p className="complaint-card-desc">{item.description}</p>}
 
-                {/* Dispatch banner inside card */}
                 {item.status === "assigned" && item.dispatchNote && (
                   <div className="dispatch-banner" style={{ padding: "0.5rem 0.75rem" }}>
-                    <span className="dispatch-truck-icon" style={{ fontSize: "1.1rem" }}>🚛</span>
+                    <span className="dispatch-truck-icon" style={{ fontSize: "1.1rem" }}>
+                      🚛
+                    </span>
                     <div className="dispatch-banner-content">
                       <div className="dispatch-banner-title" style={{ fontSize: "0.8rem" }}>
                         Truck dispatched
@@ -93,9 +119,7 @@ export default function MyComplaintsPage() {
                         {item.dispatchNote}
                       </div>
                     </div>
-                    {item.estimatedArrival && (
-                      <span className="dispatch-eta">ETA {item.estimatedArrival}</span>
-                    )}
+                    {item.estimatedArrival && <span className="dispatch-eta">ETA {item.estimatedArrival}</span>}
                   </div>
                 )}
 
@@ -108,16 +132,14 @@ export default function MyComplaintsPage() {
                 <div className="complaint-card-footer">
                   <span>Submitted {formatDate(item.createdAt)}</span>
                   {item.resolvedAt && (
-                    <span style={{ color: "var(--color-primary)" }}>
-                      ✓ Resolved {formatDate(item.resolvedAt)}
-                    </span>
+                    <span style={{ color: "var(--color-primary)" }}>✓ Resolved {formatDate(item.resolvedAt)}</span>
                   )}
                 </div>
               </div>
-            </article>
+            </AnimatedCard>
           ))}
-        </div>
+        </StaggerGrid>
       )}
-    </div>
+    </CitizenShell>
   );
 }

@@ -73,12 +73,37 @@ async function getAllComplaints(req, res) {
   }
 }
 
+async function getAssignedComplaints(req, res) {
+  try {
+    const items = await Complaint.find({
+      assignedTo: req.user._id,
+      status: { $in: ["assigned", "in_progress"] },
+    })
+      .sort({ createdAt: -1 })
+      .lean();
+    return sendSuccess(res, { items, total: items.length }, "Assigned complaints fetched");
+  } catch (error) {
+    return sendError(res, error.message, 500);
+  }
+}
+
 async function getComplaintById(req, res) {
   try {
     const complaint = await Complaint.findById(req.params.id)
       .populate("userId", "name email phone")
       .populate("assignedTo", "name email phone");
     if (!complaint) return sendError(res, "Complaint not found", 404);
+
+    if (req.user.role === "citizen" && complaint.userId._id.toString() !== req.user._id.toString()) {
+      return sendError(res, "Access denied", 403);
+    }
+    if (req.user.role === "worker") {
+      const assignedId = complaint.assignedTo?._id?.toString() || complaint.assignedTo?.toString();
+      if (assignedId !== req.user._id.toString()) {
+        return sendError(res, "Access denied", 403);
+      }
+    }
+
     return sendSuccess(res, complaint, "Complaint fetched");
   } catch (error) {
     return sendError(res, error.message, 500);
@@ -90,6 +115,16 @@ async function updateStatus(req, res) {
     const { status, comment } = req.body;
     const complaint = await Complaint.findById(req.params.id);
     if (!complaint) return sendError(res, "Complaint not found", 404);
+
+    if (req.user.role === "worker") {
+      if (complaint.assignedTo?.toString() !== req.user._id.toString()) {
+        return sendError(res, "Access denied", 403);
+      }
+      const allowed = ["in_progress", "resolved"];
+      if (!allowed.includes(status)) {
+        return sendError(res, "Workers can only set status to in_progress or resolved", 403);
+      }
+    }
 
     const oldStatus = complaint.status;
     complaint.status = status;
@@ -177,6 +212,7 @@ async function getMapComplaints(req, res) {
 module.exports = {
   createComplaint,
   getMyComplaints,
+  getAssignedComplaints,
   getAllComplaints,
   getComplaintById,
   updateStatus,

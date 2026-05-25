@@ -11,12 +11,15 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminComplaintsPage from "./pages/admin/AdminComplaintsPage";
 import AdminComplaintDetailPage from "./pages/admin/AdminComplaintDetailPage";
 import AdminMapPage from "./pages/admin/AdminMapPage";
+import WorkerQueuePage from "./pages/worker/WorkerQueuePage";
+import WorkerComplaintDetailPage from "./pages/worker/WorkerComplaintDetailPage";
 import "./styles/global.css";
 
 export default function App() {
   return (
-    <>
+    <div className="app-shell">
       <Navbar />
+      <main className="app-main">
       <Routes>
         {/* Public */}
         <Route path="/login" element={<PublicOnlyRoute><LoginPage /></PublicOnlyRoute>} />
@@ -35,6 +38,10 @@ export default function App() {
         <Route path="/admin/complaints/:id"     element={<ProtectedRoute roles={["admin"]}><AdminComplaintDetailPage /></ProtectedRoute>} />
         <Route path="/admin/map"                element={<ProtectedRoute roles={["admin"]}><AdminMapPage /></ProtectedRoute>} />
 
+        {/* Worker */}
+        <Route path="/worker"       element={<ProtectedRoute roles={["worker"]}><WorkerQueuePage /></ProtectedRoute>} />
+        <Route path="/worker/:id"   element={<ProtectedRoute roles={["worker"]}><WorkerComplaintDetailPage /></ProtectedRoute>} />
+
         {/* 404 */}
         <Route path="*" element={
           <div className="page-wrapper">
@@ -46,6 +53,7 @@ export default function App() {
           </div>
         } />
       </Routes>
-    </>
+      </main>
+    </div>
   );
 }

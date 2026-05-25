@@ -7,7 +7,9 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "node --watch src/server.js",
-    "seed:admin": "node scripts/seedAdmin.js"
+    "seed:admin": "node scripts/seedAdmin.js",
+    "seed:worker": "node scripts/seedWorker.js",
+    "mongo:fix-uri": "node scripts/fixMongoUri.js"
   },
   "engines": {
     "node": ">=18"

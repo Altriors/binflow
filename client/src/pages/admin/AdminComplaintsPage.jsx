@@ -63,9 +63,9 @@ export default function AdminComplaintsPage() {
 
   return (
     <div className="page-wrapper">
-      <div className="page-header animate-fade-in" style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", flexWrap: "wrap", gap: "1rem" }}>
+      <div className="page-header page-header-dashboard animate-fade-in" style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", flexWrap: "wrap", gap: "1rem" }}>
         <div>
-          <h2>All Complaints</h2>
+          <h2 className="page-title">All Complaints</h2>
           <p>{total} total complaints</p>
         </div>
         <Link to="/admin" className="btn btn-secondary btn-sm">← Dashboard</Link>
