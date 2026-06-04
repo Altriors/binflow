@@ -373,3 +373,20 @@
     min-width: 100%;
   }
 }
+
+/* ─── Dark Mode overrides for citizen dashboard components ─── */
+.dark .citizen-stat-grid .stat-card {
+  border-color: var(--color-border);
+  background: var(--color-surface-glass);
+}
+.dark .citizen-complaint-card {
+  border-color: var(--color-border);
+  background: var(--color-surface-glass);
+}
+.dark .citizen-action-card {
+  border-color: var(--color-border);
+}
+.dark .map-loader {
+  background: linear-gradient(135deg, #0e1e16, #091c25);
+  color: var(--color-text-muted);
+}
