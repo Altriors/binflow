@@ -66,8 +66,8 @@ export default function ComplaintMap({
   }
 
   return (
-    <div className="complaint-map-wrap">
-      <div className="map-picker-body" style={{ height }}>
+    <div className="border rounded-2xl overflow-hidden border-slate-200 dark:border-[#172026] bg-slate-50/50 dark:bg-[#0e141a]/40 shadow-sm">
+      <div className="relative w-full overflow-hidden" style={{ height }}>
         {ready && (
           <MapContainer
             center={[coords.lat, coords.lng]}
@@ -89,17 +89,17 @@ export default function ComplaintMap({
         )}
       </div>
 
-      <div className="complaint-map-footer">
-        <div className="complaint-map-location-text">
-          {address ? <strong>{address}</strong> : null}
-          <span className="complaint-map-coords">{coords.label}</span>
+      <div className="flex items-center justify-between gap-4 p-3.5 border-t border-slate-200 dark:border-[#172026] bg-slate-100/30 dark:bg-[#0e141a]/60">
+        <div className="flex flex-col text-xs max-w-[70%]">
+          {address ? <strong className="truncate font-bold text-slate-800 dark:text-white mb-0.5">{address}</strong> : null}
+          <span className="text-[10px] font-mono text-gray-500 font-medium">{coords.label}</span>
         </div>
         {showNavigate && (
           <a
             href={googleMapsDirectionsUrl(coords.lat, coords.lng)}
             target="_blank"
             rel="noopener noreferrer"
-            className="btn btn-primary btn-sm"
+            className="flex items-center gap-1 hover:gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-[11px] uppercase tracking-wider shadow-md shadow-emerald-500/10 transition-all cursor-pointer shrink-0"
           >
             🧭 Navigate
           </a>

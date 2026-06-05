@@ -80,17 +80,17 @@ export default function MapPicker({
   }, [onLocationChange, onLocationError, onLocationInfo]);
 
   return (
-    <div className="map-picker-container map-picker-premium">
-      <div className="map-picker-toolbar">
+    <div className="border rounded-2xl overflow-hidden shadow-sm transition-colors border-slate-200 dark:border-[#172026] bg-slate-50/50 dark:bg-[#0e141a]/40">
+      <div className="flex flex-wrap items-center justify-between gap-3 p-3 border-b border-slate-200 dark:border-[#172026] bg-slate-100/50 dark:bg-[#0e141a]/60">
         <button
           type="button"
-          className="btn btn-secondary btn-sm map-picker-locate-btn"
           onClick={handleUseMyLocation}
           disabled={locating}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border font-bold text-[11px] uppercase tracking-wider transition-all disabled:opacity-50 cursor-pointer bg-white hover:bg-slate-50 text-slate-800 border-slate-200 dark:bg-[#111827] dark:hover:bg-[#182236] dark:text-white dark:border-[#1e293b]"
         >
           {locating ? (
             <>
-              <span className="btn-spinner" style={{ width: 14, height: 14, borderWidth: 2 }} />
+              <span className="h-3 w-3 border-2 border-emerald-500/30 border-t-emerald-500 rounded-full animate-spin shrink-0" />
               Locating…
             </>
           ) : (
@@ -98,21 +98,26 @@ export default function MapPicker({
           )}
         </button>
         {coords ? (
-          <span className="map-picker-coords map-picker-coords-live">{coords.label}</span>
+          <span className="text-[10px] font-mono font-bold px-2.5 py-1 rounded-full border bg-emerald-500/10 text-emerald-500 border-emerald-500/20 dark:text-emerald-400 shrink-0">
+            {coords.label}
+          </span>
         ) : (
-          <span className="map-picker-coords map-picker-coords-empty">No pin yet</span>
+          <span className="text-[10px] font-mono font-bold px-2.5 py-1 rounded-full border bg-slate-100 text-slate-400 border-slate-200 dark:bg-slate-800/40 dark:text-gray-500 dark:border-[#1e293b] shrink-0">
+            No pin yet
+          </span>
         )}
-        <span className="map-picker-hint">Or tap the map to drop a pin</span>
+        <span className="text-[10px] font-semibold text-gray-500 hidden sm:inline">
+          Or tap the map to drop a pin
+        </span>
       </div>
 
-      <div className="map-picker-body" style={{ height: MAP_HEIGHT }}>
+      <div className="relative w-full overflow-hidden" style={{ height: MAP_HEIGHT }}>
         {!mapReady && <MapLoader label="Initializing map…" />}
 
         {mapReady && (
           <MapContainer
             center={center}
             zoom={zoom}
-            className="map-picker-leaflet"
             style={{ height: "100%", width: "100%", minHeight: MAP_HEIGHT }}
             scrollWheelZoom
             whenReady={(e) => {

@@ -7,8 +7,9 @@ import { parseCoords } from "../components/ComplaintMap";
 import MapPicker from "../components/MapPicker";
 import CitizenShell from "../components/citizen/CitizenShell";
 import AnimatedCard from "../components/citizen/AnimatedCard";
-import AnimatedButton from "../components/citizen/AnimatedButton";
 import SuccessModal from "../components/citizen/SuccessModal";
+import { useTheme } from "../context/ThemeContext";
+import { Camera, Send } from "lucide-react";
 
 const categories = ["overflowing_bin", "missed_pickup", "roadside_dumping", "dead_animal", "other"];
 const priorities = ["low", "medium", "high"];
@@ -19,10 +20,16 @@ const categoryLabels = {
   dead_animal: "Dead Animal",
   other: "Other",
 };
-const priorityColors = { low: "#6b7280", medium: "#f59e0b", high: "#ef4444" };
+
+const priorityStyles = {
+  low: { border: "border-slate-200 focus:border-emerald-500/50 dark:border-[#1e293b]" },
+  medium: { border: "border-amber-400 focus:border-amber-500/50 dark:border-amber-500/40" },
+  high: { border: "border-red-400 focus:border-red-500/50 dark:border-red-500/40" },
+};
 
 export default function NewComplaintPage() {
   const navigate = useNavigate();
+  const { theme } = useTheme();
   const [submitting, setSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [image, setImage] = useState(null);
@@ -108,160 +115,243 @@ export default function NewComplaintPage() {
       />
 
       <motion.div
-        className="page-header page-header-dashboard"
+        className="flex flex-col gap-1.5 mb-6 max-w-2xl mx-auto w-full"
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
       >
-        <h2 className="page-title">Report a Waste Issue</h2>
-        <p>Add a photo and pin the exact location so we can dispatch help quickly.</p>
+        <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+          Report a Waste Issue
+        </h2>
+        <p className="text-xs text-gray-500">
+          Add a photo and pin the exact location so we can dispatch help quickly.
+        </p>
       </motion.div>
 
-      <form onSubmit={handleSubmit} style={{ maxWidth: 680 }}>
-        <AnimatedCard className="card form-grid complaint-form-card" delay={0.05}>
-          <div className="form-row">
-            <div className="form-group">
-              <label className="form-label required" htmlFor="category">Category</label>
-              <select
-                id="category"
-                className="form-select"
-                value={form.category}
-                onChange={(e) => set("category", e.target.value)}
-                required
-              >
-                {categories.map((c) => (
-                  <option key={c} value={c}>
-                    {categoryLabels[c]}
-                  </option>
-                ))}
-              </select>
+      <form onSubmit={handleSubmit} className="max-w-2xl mx-auto w-full">
+        {/* Form Fields Card */}
+        <AnimatedCard
+          className={`p-6 rounded-2xl border shadow-sm backdrop-blur-xl transition-all duration-300 space-y-5
+            ${theme === "dark"
+              ? "bg-[#0e141a]/85 border-[#172026] text-white shadow-black/40"
+              : "bg-white/80 border-slate-200 text-slate-900 shadow-slate-200/50"
+            }
+          `}
+          delay={0.05}
+        >
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <label className="text-[10px] uppercase font-bold text-gray-500 tracking-wider block" htmlFor="category">
+                Category
+              </label>
+              <div className="relative">
+                <select
+                  id="category"
+                  value={form.category}
+                  onChange={(e) => set("category", e.target.value)}
+                  required
+                  className={`w-full border rounded-xl py-2.5 px-3.5 text-sm outline-none transition-all cursor-pointer appearance-none bg-no-repeat bg-[right_1rem_center] bg-[length:12px]
+                    ${theme === "dark"
+                      ? "bg-[#111827] border-[#1e293b] text-white focus:border-emerald-500/50 focus:ring-2 focus:ring-emerald-500/10 bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 fill=%22none%22 viewBox=%220 0 24 24%22 stroke=%22%239ca3af%22 stroke-width=%222%22%3E%3Cpath stroke-linecap=%22round%22 stroke-linejoin=%22round%22 d=%22M19.5 8.25l-7.5 7.5-7.5-7.5%22/%3E%3C/svg%3E')]"
+                      : "bg-slate-50 border-slate-200 text-slate-900 focus:border-emerald-500/50 focus:ring-2 focus:ring-emerald-500/10 bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 fill=%22none%22 viewBox=%220 0 24 24%22 stroke=%22%234b5563%22 stroke-width=%222%22%3E%3Cpath stroke-linecap=%22round%22 stroke-linejoin=%22round%22 d=%22M19.5 8.25l-7.5 7.5-7.5-7.5%22/%3E%3C/svg%3E')]"
+                    }
+                  `}
+                >
+                  {categories.map((c) => (
+                    <option key={c} value={c}>
+                      {categoryLabels[c]}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
-            <div className="form-group">
-              <label className="form-label required" htmlFor="priority">Priority</label>
-              <select
-                id="priority"
-                className="form-select"
-                value={form.priority}
-                onChange={(e) => set("priority", e.target.value)}
-                style={{ borderColor: priorityColors[form.priority] }}
-              >
-                {priorities.map((p) => (
-                  <option key={p} value={p}>
-                    {p.charAt(0).toUpperCase() + p.slice(1)}
-                  </option>
-                ))}
-              </select>
+
+            <div className="space-y-1.5">
+              <label className="text-[10px] uppercase font-bold text-gray-500 tracking-wider block" htmlFor="priority">
+                Priority
+              </label>
+              <div className="relative">
+                <select
+                  id="priority"
+                  value={form.priority}
+                  onChange={(e) => set("priority", e.target.value)}
+                  className={`w-full border rounded-xl py-2.5 px-3.5 text-sm outline-none transition-all cursor-pointer appearance-none bg-no-repeat bg-[right_1rem_center] bg-[length:12px] focus:ring-2 focus:ring-emerald-500/10
+                    ${priorityStyles[form.priority].border}
+                    ${theme === "dark"
+                      ? "bg-[#111827] text-white bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 fill=%22none%22 viewBox=%220 0 24 24%22 stroke=%22%239ca3af%22 stroke-width=%222%22%3E%3Cpath stroke-linecap=%22round%22 stroke-linejoin=%22round%22 d=%22M19.5 8.25l-7.5 7.5-7.5-7.5%22/%3E%3C/svg%3E')]"
+                      : "bg-slate-50 text-slate-900 bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 fill=%22none%22 viewBox=%220 0 24 24%22 stroke=%22%234b5563%22 stroke-width=%222%22%3E%3Cpath stroke-linecap=%22round%22 stroke-linejoin=%22round%22 d=%22M19.5 8.25l-7.5 7.5-7.5-7.5%22/%3E%3C/svg%3E')]"
+                    }
+                  `}
+                >
+                  {priorities.map((p) => (
+                    <option key={p} value={p}>
+                      {p.charAt(0).toUpperCase() + p.slice(1)}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
           </div>
 
-          <div className="form-group">
-            <label className="form-label required" htmlFor="title">Title</label>
+          <div className="space-y-1.5">
+            <label className="text-[10px] uppercase font-bold text-gray-500 tracking-wider block" htmlFor="title">
+              Title
+            </label>
             <input
               id="title"
               type="text"
-              className="form-input"
               placeholder="e.g. Overflowing bin near bus stop"
               value={form.title}
               onChange={(e) => set("title", e.target.value)}
               required
+              className={`w-full border rounded-xl py-2.5 px-3.5 text-sm outline-none transition-all
+                ${theme === "dark"
+                  ? "bg-[#111827] border-[#1e293b] text-white placeholder-gray-500 focus:border-emerald-500/50 focus:ring-2 focus:ring-emerald-500/10"
+                  : "bg-slate-50 border-slate-200 text-slate-900 placeholder-slate-400 focus:border-emerald-500/50 focus:ring-2 focus:ring-emerald-500/10"
+                }
+              `}
             />
           </div>
 
-          <div className="form-group">
-            <label className="form-label required" htmlFor="description">Description</label>
+          <div className="space-y-1.5">
+            <label className="text-[10px] uppercase font-bold text-gray-500 tracking-wider block" htmlFor="description">
+              Description
+            </label>
             <textarea
               id="description"
-              className="form-textarea"
               placeholder="Describe the issue — how bad is it, how long has it been there..."
               value={form.description}
               onChange={(e) => set("description", e.target.value)}
               required
+              className={`w-full border rounded-xl py-2.5 px-3.5 text-sm outline-none transition-all min-h-[110px] resize-y
+                ${theme === "dark"
+                  ? "bg-[#111827] border-[#1e293b] text-white placeholder-gray-500 focus:border-emerald-500/50 focus:ring-2 focus:ring-emerald-500/10"
+                  : "bg-slate-50 border-slate-200 text-slate-900 placeholder-slate-400 focus:border-emerald-500/50 focus:ring-2 focus:ring-emerald-500/10"
+                }
+              `}
             />
           </div>
 
-          <div className="form-group">
-            <label className="form-label required">Photo Evidence</label>
-            <div className="file-input-wrapper">
-              <label className="file-input-label">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" />
-                  <circle cx="12" cy="13" r="4" />
-                </svg>
-                {image ? "Change photo" : "Upload a photo"}
-                <input type="file" accept="image/*" className="file-input-hidden" onChange={handleImageChange} />
-              </label>
+          <div className="space-y-1.5">
+            <label className="text-[10px] uppercase font-bold text-gray-500 tracking-wider block">
+              Photo Evidence
+            </label>
+            <div className={`relative border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center gap-2 hover:bg-slate-50/50 dark:hover:bg-[#111827]/20 transition-all cursor-pointer group
+              ${theme === "dark"
+                ? "border-[#1e293b] hover:border-emerald-500/50 bg-[#111827]/10"
+                : "border-slate-200 hover:border-emerald-500/50 bg-slate-50/20"
+              }
+            `}>
+              <Camera size={22} className="text-gray-500 group-hover:text-emerald-500 transition-colors" />
+              <span className="text-xs font-bold text-gray-500 select-none">
+                {image ? "✓ Change photo" : "Upload a photo"}
+              </span>
+              <input
+                type="file"
+                accept="image/*"
+                className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                onChange={handleImageChange}
+              />
             </div>
             {preview && (
               <motion.div
-                className="photo-preview-wrap"
-                initial={{ opacity: 0, scale: 0.96 }}
+                className="mt-3.5 rounded-xl overflow-hidden border border-slate-200 dark:border-[#172026] shadow-sm max-h-[220px]"
+                initial={{ opacity: 0, scale: 0.98 }}
                 animate={{ opacity: 1, scale: 1 }}
-                style={{ marginTop: "0.6rem", borderRadius: "var(--radius-md)", overflow: "hidden", maxHeight: 180 }}
               >
-                <img src={preview} alt="Preview" style={{ width: "100%", objectFit: "cover", display: "block" }} />
+                <img src={preview} alt="Preview" className="w-full h-full object-cover max-h-[220px]" />
               </motion.div>
             )}
-            {image && !preview && <p className="file-name-display">✓ {image.name}</p>}
+            {image && !preview && <p className="text-xs text-emerald-500 mt-1">✓ {image.name}</p>}
           </div>
         </AnimatedCard>
 
-        <AnimatedCard className="card card-map-panel" delay={0.12}>
-          <div className="form-group" style={{ marginBottom: 0 }}>
-            <label className="form-label required">Pin Location</label>
-            <p className="form-hint" style={{ marginBottom: "0.65rem" }}>
+        {/* Map Pinned Card */}
+        <AnimatedCard
+          className={`p-6 rounded-2xl border shadow-sm backdrop-blur-xl transition-all duration-300 space-y-4 mt-6
+            ${theme === "dark"
+              ? "bg-[#0e141a]/85 border-[#172026] text-white shadow-black/40"
+              : "bg-white/80 border-slate-200 text-slate-900 shadow-slate-200/50"
+            }
+          `}
+          delay={0.12}
+        >
+          <div className="space-y-1">
+            <label className="text-[10px] uppercase font-bold text-gray-500 tracking-wider block">
+              Pin Location
+            </label>
+            <p className="text-[10px] text-gray-500">
               Use your GPS or tap the map to mark the exact spot
             </p>
-            <MapPicker
-              latitude={form.latitude}
-              longitude={form.longitude}
-              onLocationChange={handleLocationChange}
-              onLocationError={handleLocationError}
-              onLocationInfo={handleLocationInfo}
-            />
           </div>
 
-          <div className="form-row" style={{ marginTop: "1rem" }}>
-            <div className="form-group">
-              <label className="form-label" htmlFor="address">Address / Landmark</label>
+          <MapPicker
+            latitude={form.latitude}
+            longitude={form.longitude}
+            onLocationChange={handleLocationChange}
+            onLocationError={handleLocationError}
+            onLocationInfo={handleLocationInfo}
+          />
+
+          <div className="grid grid-cols-2 gap-4 mt-2">
+            <div className="space-y-1.5">
+              <label className="text-[10px] uppercase font-bold text-gray-500 tracking-wider block" htmlFor="address">
+                Address / Landmark
+              </label>
               <input
                 id="address"
                 type="text"
-                className="form-input"
                 placeholder="Optional"
                 value={form.address}
                 onChange={(e) => set("address", e.target.value)}
+                className={`w-full border rounded-xl py-2 px-3 text-xs outline-none transition-all
+                  ${theme === "dark"
+                    ? "bg-[#111827] border-[#1e293b] text-white placeholder-gray-500 focus:border-emerald-500/50"
+                    : "bg-slate-50 border-slate-200 text-slate-900 placeholder-slate-400 focus:border-emerald-500/50"
+                  }
+                `}
               />
             </div>
-            <div className="form-group">
-              <label className="form-label" htmlFor="ward">Ward / Zone</label>
+            <div className="space-y-1.5">
+              <label className="text-[10px] uppercase font-bold text-gray-500 tracking-wider block" htmlFor="ward">
+                Ward / Zone
+              </label>
               <input
                 id="ward"
                 type="text"
-                className="form-input"
                 placeholder="Optional"
                 value={form.ward}
                 onChange={(e) => set("ward", e.target.value)}
+                className={`w-full border rounded-xl py-2 px-3 text-xs outline-none transition-all
+                  ${theme === "dark"
+                    ? "bg-[#111827] border-[#1e293b] text-white placeholder-gray-500 focus:border-emerald-500/50"
+                    : "bg-slate-50 border-slate-200 text-slate-900 placeholder-slate-400 focus:border-emerald-500/50"
+                  }
+                `}
               />
             </div>
           </div>
         </AnimatedCard>
 
+        {/* Submit Actions */}
         <motion.div
-          style={{ marginTop: "1.25rem" }}
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
         >
           <AnimatedButton
             type="submit"
-            className="btn btn-primary btn-lg btn-full btn-glow"
             disabled={submitting}
+            className="w-full flex items-center justify-center gap-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-sm py-3.5 shadow-lg shadow-emerald-500/20 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 mt-6 cursor-pointer"
           >
             {submitting ? (
               <>
-                <span className="btn-spinner" /> Submitting…
+                <span className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin shrink-0" />
+                Submitting…
               </>
             ) : (
-              "🚨 Submit Complaint"
+              <>
+                Submit Complaint <Send size={15} />
+              </>
             )}
           </AnimatedButton>
         </motion.div>

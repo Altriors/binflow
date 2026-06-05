@@ -61,8 +61,8 @@ export default function App() {
           <Route path="/" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
 
           {/* Citizen */}
-          <Route path="/complaints/new" element={<LegacyWrapper><ProtectedRoute roles={["citizen"]}><NewComplaintPage /></ProtectedRoute></LegacyWrapper>} />
-          <Route path="/complaints/my"  element={<LegacyWrapper><ProtectedRoute roles={["citizen"]}><MyComplaintsPage /></ProtectedRoute></LegacyWrapper>} />
+          <Route path="/complaints/new" element={<ProtectedRoute roles={["citizen"]}><NewComplaintPage /></ProtectedRoute>} />
+          <Route path="/complaints/my"  element={<ProtectedRoute roles={["citizen"]}><MyComplaintsPage /></ProtectedRoute>} />
 
           {/* Admin */}
           <Route path="/admin"                    element={<LegacyWrapper><ProtectedRoute roles={["admin"]}><AdminDashboard /></ProtectedRoute></LegacyWrapper>} />
