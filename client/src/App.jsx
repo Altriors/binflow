@@ -72,7 +72,7 @@ export default function App() {
 
           {/* Worker */}
           <Route path="/worker"       element={<ProtectedRoute roles={["worker"]}><WorkerQueuePage /></ProtectedRoute>} />
-          <Route path="/worker/:id"   element={<LegacyWrapper><ProtectedRoute roles={["worker"]}><WorkerComplaintDetailPage /></ProtectedRoute></LegacyWrapper>} />
+          <Route path="/worker/:id"   element={<ProtectedRoute roles={["worker"]}><WorkerComplaintDetailPage /></ProtectedRoute>} />
 
           {/* 404 */}
           <Route path="*" element={

@@ -3,7 +3,9 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import api from "../../services/api";
 import StatusBadge from "../../components/StatusBadge";
-import ComplaintMap, { parseCoords, googleMapsDirectionsUrl } from "../../components/ComplaintMap";
+import ComplaintMap, { parseCoords } from "../../components/ComplaintMap";
+import { useTheme } from "../../context/ThemeContext";
+import { ArrowLeft, MapPin, Truck, CheckCircle2 } from "lucide-react";
 
 const categoryLabels = {
   overflowing_bin: "Overflowing Bin",
@@ -14,6 +16,7 @@ const categoryLabels = {
 };
 
 export default function WorkerComplaintDetailPage() {
+  const { theme } = useTheme();
   const { id } = useParams();
   const navigate = useNavigate();
   const [complaint, setComplaint] = useState(null);
@@ -55,11 +58,19 @@ export default function WorkerComplaintDetailPage() {
     }
   }
 
-  if (loading) return <div className="loading-spinner">Loading job...</div>;
+  if (loading) return (
+    <div className="p-6 md:p-8 space-y-4 max-w-5xl mx-auto w-full">
+      <div className="h-10 bg-slate-800/10 dark:bg-slate-800/40 rounded-xl animate-pulse w-1/4" />
+      <div className="h-[300px] bg-slate-800/10 dark:bg-slate-800/40 rounded-2xl animate-pulse" />
+    </div>
+  );
+
   if (!complaint) {
     return (
-      <div className="page-wrapper">
-        <div className="empty-state"><span className="empty-state-icon">❌</span><h3>Job not found</h3></div>
+      <div className="p-6 md:p-8 max-w-5xl mx-auto w-full text-center">
+        <div className="p-12 border border-dashed rounded-2xl border-slate-300 dark:border-slate-800">
+          <h3 className="font-bold text-red-500">Job not found</h3>
+        </div>
       </div>
     );
   }
@@ -67,105 +78,137 @@ export default function WorkerComplaintDetailPage() {
   const coords = parseCoords(complaint.latitude, complaint.longitude);
 
   return (
-    <div className="page-wrapper">
-      <Link to="/worker" className="back-link">
-        ← My Assignments
+    <div className="p-6 md:p-8 space-y-6 max-w-3xl mx-auto w-full">
+      <Link to="/worker" className="text-xs font-semibold text-gray-500 hover:text-emerald-500 flex items-center gap-1">
+        <ArrowLeft size={14} /> My Assignments
       </Link>
 
-      <div className="animate-fade-in" style={{ marginBottom: "1.25rem" }}>
-        <h2 className="page-title" style={{ marginBottom: "0.35rem", fontSize: "1.35rem" }}>{complaint.title}</h2>
-        <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", alignItems: "center" }}>
+      <div className="animate-fade-in space-y-1">
+        <h2 className="text-lg font-bold tracking-tight text-slate-900 dark:text-white leading-tight">
+          {complaint.title}
+        </h2>
+        <div className="flex flex-wrap items-center gap-2 mt-1">
           <StatusBadge status={complaint.status} />
           <StatusBadge status={complaint.priority} type="priority" />
-          <span style={{ fontSize: "0.82rem", color: "var(--color-text-muted)" }}>
+          <span className="text-xs text-gray-500 font-semibold">
             {categoryLabels[complaint.category] || complaint.category}
           </span>
         </div>
       </div>
 
       {complaint.dispatchNote && (
-        <div className="dispatch-banner animate-fade-in" style={{ marginBottom: "1.25rem" }}>
-          <span className="dispatch-truck-icon">🚛</span>
-          <div className="dispatch-banner-content">
-            <div className="dispatch-banner-title">Dispatch instructions</div>
-            <div className="dispatch-banner-sub">{complaint.dispatchNote}</div>
+        <div className="flex items-center justify-between gap-4 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-500">
+          <div className="flex items-center gap-3">
+            <Truck className="animate-bounce shrink-0" size={20} />
+            <div className="flex flex-col text-xs">
+              <span className="font-bold">Dispatch instructions</span>
+              <span className="text-gray-500 italic mt-0.5">"{complaint.dispatchNote}"</span>
+            </div>
           </div>
           {complaint.estimatedArrival && (
-            <span className="dispatch-eta">ETA {complaint.estimatedArrival}</span>
+            <span className="text-[10px] font-extrabold bg-amber-500 text-slate-950 px-2 py-0.5 rounded-full shrink-0">
+              ETA {complaint.estimatedArrival}
+            </span>
           )}
         </div>
       )}
 
-      <div style={{ display: "grid", gap: "1.25rem", maxWidth: 720 }}>
-        <div className="card animate-slide-up">
-          <h3 style={{ marginBottom: "0.75rem" }}>Details</h3>
-          <p style={{ fontSize: "0.9rem", marginBottom: "0.75rem" }}>{complaint.description}</p>
-          <div style={{ fontSize: "0.88rem" }}>
-            <strong>Location:</strong>{" "}
-            {complaint.address || (coords ? coords.label : "No address on file")}
-            {complaint.ward && (
-              <span style={{ color: "var(--color-text-muted)" }}> · Ward {complaint.ward}</span>
-            )}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+        {/* Left detail card stack */}
+        <div className="lg:col-span-2 space-y-6">
+          <div className={`p-6 rounded-2xl border transition-all duration-300 space-y-4
+            ${theme === "dark" ? "bg-[#0e141a] border-[#172026] text-white" : "bg-white border-slate-200 text-slate-900"}
+          `}>
+            <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500">Job Details</h3>
+            <p className="text-xs leading-relaxed text-gray-600 dark:text-gray-400 bg-slate-50 dark:bg-[#111827]/30 p-3 rounded-xl border border-slate-100 dark:border-[#1e293b]/40">
+              {complaint.description}
+            </p>
+            <div className="text-xs flex items-center gap-1.5 text-gray-500">
+              <MapPin size={14} className="shrink-0" />
+              <span>
+                <strong>Location:</strong>{" "}
+                {complaint.address || (coords ? coords.label : "No address on file")}
+              </span>
+              {complaint.ward && (
+                <span className="rounded-full bg-slate-800/10 dark:bg-slate-800/80 px-2 py-0.5 text-[9px] font-bold">
+                  Ward {complaint.ward}
+                </span>
+              )}
+            </div>
           </div>
+
+          <div className={`rounded-2xl border overflow-hidden transition-all
+            ${theme === "dark" ? "bg-[#0e141a] border-[#172026]" : "bg-white border-slate-200"}
+          `}>
+            <div className="p-4 border-b border-slate-200 dark:border-[#172026] font-bold text-xs">
+              📍 Job Location
+            </div>
+            <ComplaintMap
+              latitude={complaint.latitude}
+              longitude={complaint.longitude}
+              title={complaint.title}
+              address={complaint.address}
+              height={260}
+              showNavigate
+            />
+          </div>
+
+          {complaint.imageUrl && (
+            <div className={`rounded-2xl border overflow-hidden transition-all
+              ${theme === "dark" ? "bg-[#0e141a] border-[#172026]" : "bg-white border-slate-200"}
+            `}>
+              <img src={complaint.imageUrl} alt="Site" className="w-full max-h-[300px] object-cover" />
+            </div>
+          )}
         </div>
 
-        <div className="card animate-slide-up" style={{ padding: 0, overflow: "hidden" }}>
-          <div className="complaint-map-header">📍 Job location</div>
-          <ComplaintMap
-            latitude={complaint.latitude}
-            longitude={complaint.longitude}
-            title={complaint.title}
-            address={complaint.address}
-            height={260}
-            showNavigate
-          />
-        </div>
-
-        {coords && (
-          <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
-            <a
-              href={googleMapsDirectionsUrl(coords.lat, coords.lng)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn btn-primary"
-            >
-              🧭 Open directions in Google Maps
-            </a>
-          </div>
-        )}
-
-        {complaint.imageUrl && (
-          <div className="card animate-slide-up" style={{ padding: 0, overflow: "hidden" }}>
-            <img src={complaint.imageUrl} alt="Site" style={{ width: "100%", maxHeight: 280, objectFit: "cover", display: "block" }} />
-          </div>
-        )}
-
-        <div className="card animate-slide-up">
-          <h3 style={{ marginBottom: "1rem" }}>Update progress</h3>
-          <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
-            {complaint.status === "assigned" && (
-              <button
-                type="button"
-                className="btn btn-primary btn-full"
-                disabled={updating}
-                onClick={() => updateStatus("in_progress")}
-              >
-                {updating ? <><span className="btn-spinner" /> Updating...</> : "▶ Mark In Progress (arrived on site)"}
-              </button>
-            )}
-            {(complaint.status === "assigned" || complaint.status === "in_progress") && (
-              <button
-                type="button"
-                className="btn btn-secondary btn-full"
-                disabled={updating || complaint.status === "resolved"}
-                onClick={() => updateStatus("resolved")}
-              >
-                {updating ? <><span className="btn-spinner" /> Updating...</> : "✓ Mark Resolved"}
-              </button>
-            )}
-            {complaint.status === "resolved" && (
-              <p style={{ fontSize: "0.9rem", color: "var(--color-primary)", fontWeight: 600 }}>This job is resolved.</p>
-            )}
+        {/* Right actions side */}
+        <div className="space-y-6">
+          <div className={`p-6 rounded-2xl border transition-all duration-300 space-y-4
+            ${theme === "dark" ? "bg-[#0e141a] border-[#172026] text-white" : "bg-white border-slate-200 text-slate-900"}
+          `}>
+            <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500">Update progress</h3>
+            <div className="flex flex-col gap-2.5">
+              {complaint.status === "assigned" && (
+                <button
+                  type="button"
+                  disabled={updating}
+                  onClick={() => updateStatus("in_progress")}
+                  className="w-full flex items-center justify-center gap-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs py-2.5 shadow-md shadow-emerald-500/20 hover:-translate-y-0.5 active:translate-y-0 transition-all cursor-pointer"
+                >
+                  {updating ? (
+                    <>
+                      <span className="h-3.5 w-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin shrink-0" />
+                      Updating...
+                    </>
+                  ) : (
+                    "▶ Mark In Progress"
+                  )}
+                </button>
+              )}
+              {(complaint.status === "assigned" || complaint.status === "in_progress") && (
+                <button
+                  type="button"
+                  disabled={updating || complaint.status === "resolved"}
+                  onClick={() => updateStatus("resolved")}
+                  className="w-full flex items-center justify-center gap-2 rounded-xl bg-blue-500 hover:bg-blue-600 text-white font-bold text-xs py-2.5 shadow-md shadow-blue-500/20 hover:-translate-y-0.5 active:translate-y-0 transition-all cursor-pointer"
+                >
+                  {updating ? (
+                    <>
+                      <span className="h-3.5 w-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin shrink-0" />
+                      Updating...
+                    </>
+                  ) : (
+                    "✓ Mark Resolved"
+                  )}
+                </button>
+              )}
+              {complaint.status === "resolved" && (
+                <p className="text-xs text-emerald-500 font-bold flex items-center gap-1">
+                  <CheckCircle2 size={14} /> This job is resolved.
+                </p>
+              )}
+            </div>
           </div>
         </div>
       </div>
