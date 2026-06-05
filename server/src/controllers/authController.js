@@ -63,4 +63,23 @@ async function getMe(req, res) {
   }
 }
 
-module.exports = { register, login, getMe };
+async function updateProfile(req, res) {
+  try {
+    const { name, phone, ward } = req.body;
+    const user = await User.findById(req.user._id);
+    if (!user) return sendError(res, "User not found", 404);
+
+    if (name) user.name = name;
+    if (phone !== undefined) user.phone = phone;
+    if (ward !== undefined) user.ward = ward;
+
+    await user.save();
+
+    const token = signToken(user);
+    return sendSuccess(res, { token, user: safeUser(user) }, "Profile updated successfully");
+  } catch (error) {
+    return sendError(res, error.message, 500);
+  }
+}
+
+module.exports = { register, login, getMe, updateProfile };

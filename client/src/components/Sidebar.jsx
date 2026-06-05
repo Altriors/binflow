@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import { motion, AnimatePresence } from "framer-motion";
@@ -215,7 +215,10 @@ export default function Sidebar({ isOpen, toggleSidebar }) {
                 : "bg-slate-50 border-slate-200"
               }
             `}>
-              <div className="flex items-center gap-2 min-w-0">
+              <Link 
+                to="/profile"
+                className="flex items-center gap-2 min-w-0 hover:opacity-80 transition-opacity cursor-pointer"
+              >
                 <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-white text-xs font-black">
                   {user?.name?.[0]?.toUpperCase()}
                 </div>
@@ -227,7 +230,7 @@ export default function Sidebar({ isOpen, toggleSidebar }) {
                     <span className="text-[9px] text-gray-500 uppercase font-semibold mt-0.5">{user?.role}</span>
                   </div>
                 )}
-              </div>
+              </Link>
 
               {isOpen && (
                 <button

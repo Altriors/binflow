@@ -77,7 +77,7 @@ async function getAssignedComplaints(req, res) {
   try {
     const items = await Complaint.find({
       assignedTo: req.user._id,
-      status: { $in: ["assigned", "in_progress"] },
+      status: { $in: ["assigned", "in_progress", "resolved", "closed"] },
     })
       .sort({ createdAt: -1 })
       .lean();
@@ -104,7 +104,16 @@ async function getComplaintById(req, res) {
       }
     }
 
-    return sendSuccess(res, complaint, "Complaint fetched");
+    // Fetch chronological status log history
+    const statusLogs = await StatusLog.find({ complaintId: complaint._id })
+      .populate("updatedBy", "name role")
+      .sort({ createdAt: 1 })
+      .lean();
+
+    const complaintObj = complaint.toObject();
+    complaintObj.statusLogs = statusLogs || [];
+
+    return sendSuccess(res, complaintObj, "Complaint fetched");
   } catch (error) {
     return sendError(res, error.message, 500);
   }
@@ -124,11 +133,28 @@ async function updateStatus(req, res) {
       if (!allowed.includes(status)) {
         return sendError(res, "Workers can only set status to in_progress or resolved", 403);
       }
+      if (status === "resolved") {
+        if (!req.file) {
+          return sendError(res, "Resolution photo proof is required to resolve the complaint", 400);
+        }
+        if (!comment || !comment.trim()) {
+          return sendError(res, "Resolution description/note is required to resolve the complaint", 400);
+        }
+      }
+    }
+
+    let afterImageUrl = complaint.afterImageUrl;
+    if (req.file) {
+      afterImageUrl = await uploadToCloudinary(req.file.buffer, req.file.mimetype);
     }
 
     const oldStatus = complaint.status;
     complaint.status = status;
-    if (status === "resolved") complaint.resolvedAt = new Date();
+    if (status === "resolved") {
+      complaint.resolvedAt = new Date();
+      complaint.afterImageUrl = afterImageUrl;
+      complaint.resolutionNote = comment || "";
+    }
     await complaint.save();
 
     await StatusLog.create({

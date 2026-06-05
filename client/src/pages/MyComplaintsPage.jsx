@@ -71,6 +71,12 @@ function ComplaintDetailsModal({ item, onClose }) {
       date: item.resolvedAt, 
       done: currentStatusIdx >= 3 
     },
+    { 
+      label: "Closed", 
+      desc: "Ticket closed and verified by administrator", 
+      date: item.status === "closed" ? item.updatedAt : null, 
+      done: currentStatusIdx >= 4 
+    },
   ];
 
   return (
@@ -172,12 +178,17 @@ function ComplaintDetailsModal({ item, onClose }) {
                   <img src={item.imageUrl} alt="Reported" className="w-full h-full object-cover" />
                 </div>
               </div>
-              {item.status === "resolved" && item.afterImageUrl && (
+              {(item.status === "resolved" || item.status === "closed") && item.afterImageUrl && (
                 <div className="space-y-1.5">
                   <span className="text-[9px] uppercase font-bold text-emerald-500 tracking-wider block">Resolution Proof</span>
                   <div className="aspect-video rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-900 border border-emerald-500/30">
                     <img src={item.afterImageUrl} alt="Resolution Proof" className="w-full h-full object-cover" />
                   </div>
+                  {item.resolutionNote && (
+                    <p className="text-[11px] text-gray-600 dark:text-gray-400 mt-1 italic">
+                      Note: "{item.resolutionNote}"
+                    </p>
+                  )}
                 </div>
               )}
             </div>

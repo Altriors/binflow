@@ -199,6 +199,14 @@ export default function AdminComplaintDetailPage() {
                   {complaint.description}
                 </p>
               </div>
+              {complaint.resolutionNote && (
+                <div className="space-y-1">
+                  <span className="text-[9px] uppercase text-emerald-500 block font-bold">Worker Resolution Note</span>
+                  <p className="text-xs leading-relaxed text-emerald-600 dark:text-emerald-400 bg-emerald-500/5 dark:bg-emerald-500/10 p-3 rounded-xl border border-emerald-500/10 dark:border-emerald-500/20 italic">
+                    "{complaint.resolutionNote}"
+                  </p>
+                </div>
+              )}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <span className="text-[9px] uppercase text-gray-500 block font-bold">Reported By</span>
@@ -217,15 +225,29 @@ export default function AdminComplaintDetailPage() {
             </div>
           </div>
 
-          {/* Reported Image */}
-          {complaint.imageUrl && (
-            <div className={`rounded-2xl border overflow-hidden transition-all
-              ${theme === "dark" ? "bg-[#0e141a] border-[#172026]" : "bg-white border-slate-200"}
-            `}>
-              <img src={complaint.imageUrl} alt="Complaint" className="w-full max-h-[320px] object-cover" />
-              <div className="p-3 border-t border-slate-200 dark:border-[#172026] text-[10px] text-gray-500 font-semibold bg-slate-50/50 dark:bg-[#111827]/30">
-                Photo submitted by citizen
-              </div>
+          {/* Photos (Reported vs Resolved) */}
+          {(complaint.imageUrl || complaint.afterImageUrl) && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              {complaint.imageUrl && (
+                <div className={`rounded-2xl border overflow-hidden transition-all
+                  ${theme === "dark" ? "bg-[#0e141a] border-[#172026]" : "bg-white border-slate-200"}
+                `}>
+                  <img src={complaint.imageUrl} alt="Complaint" className="w-full max-h-[320px] object-cover" />
+                  <div className="p-3 border-t border-slate-200 dark:border-[#172026] text-[10px] text-gray-500 font-semibold bg-slate-50/50 dark:bg-[#111827]/30">
+                    Before (Citizen Photo)
+                  </div>
+                </div>
+              )}
+              {complaint.afterImageUrl && (
+                <div className={`rounded-2xl border overflow-hidden transition-all
+                  ${theme === "dark" ? "bg-[#0e141a] border-[#e2e8f0]/10" : "bg-white border-emerald-200"}
+                `}>
+                  <img src={complaint.afterImageUrl} alt="Resolution Proof" className="w-full max-h-[320px] object-cover" />
+                  <div className="p-3 border-t border-emerald-200/50 dark:border-[#172026] text-[10px] text-emerald-500 font-bold bg-emerald-500/5 dark:bg-emerald-500/10">
+                    After (Resolution Proof)
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -249,6 +271,42 @@ export default function AdminComplaintDetailPage() {
                     <Popup>{complaint.title}</Popup>
                   </Marker>
                 </MapContainer>
+              </div>
+            </div>
+          )}
+
+          {/* Activity Logs (Audit Trail) */}
+          {complaint.statusLogs && complaint.statusLogs.length > 0 && (
+            <div className={`p-6 rounded-2xl border transition-all duration-300 space-y-4
+              ${theme === "dark" ? "bg-[#0e141a] border-[#172026] text-white" : "bg-white border-slate-200 text-slate-900"}
+            `}>
+              <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500">Activity & Audit History</h3>
+              <div className="relative pl-6 space-y-4 mt-2">
+                <div className="absolute top-1.5 bottom-1.5 left-[9px] w-0.5 bg-slate-200 dark:bg-slate-800" />
+                
+                {complaint.statusLogs.map((log, idx) => (
+                  <div key={log._id || idx} className="relative flex flex-col text-xs">
+                    {/* Status Circle Dot */}
+                    <div className="absolute -left-[23px] mt-1 h-3.5 w-3.5 rounded-full bg-emerald-500 border-2 border-white dark:border-[#0e141a]" />
+                    
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <span className="font-extrabold capitalize text-slate-900 dark:text-emerald-400">
+                        {log.newStatus.replace("_", " ")}
+                      </span>
+                      <span className="text-gray-400 text-[10px]">
+                        by {log.updatedBy?.name || "System"} ({log.updatedBy?.role || "system"})
+                      </span>
+                      <span className="text-[10px] text-gray-500 font-mono ml-auto shrink-0">
+                        {formatDate(log.createdAt)}
+                      </span>
+                    </div>
+                    {log.comment && (
+                      <p className="text-[11px] text-gray-500 italic mt-1 bg-slate-50 dark:bg-[#111827]/30 p-2 rounded-lg border border-slate-100 dark:border-[#1e293b]/40">
+                        "{log.comment}"
+                      </p>
+                    )}
+                  </div>
+                ))}
               </div>
             </div>
           )}

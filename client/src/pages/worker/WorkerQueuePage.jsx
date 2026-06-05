@@ -28,6 +28,7 @@ export default function WorkerQueuePage() {
   const { theme } = useTheme();
   const [loading, setLoading] = useState(true);
   const [items, setItems] = useState([]);
+  const [activeTab, setActiveTab] = useState("active");
 
   useEffect(() => {
     async function load() {
@@ -46,7 +47,6 @@ export default function WorkerQueuePage() {
   if (loading) {
     return (
       <div className="p-6 md:p-8 space-y-4 max-w-5xl mx-auto w-full">
-        {/* Shimmer headers */}
         <div className="h-16 bg-slate-800/10 dark:bg-slate-800/40 rounded-2xl animate-pulse w-1/3" />
         <div className="grid gap-4 mt-6">
           <div className="h-28 bg-slate-800/10 dark:bg-slate-800/40 rounded-2xl animate-pulse" />
@@ -56,10 +56,16 @@ export default function WorkerQueuePage() {
     );
   }
 
+  // Filter tasks into Active (assigned, in_progress) and Completed (resolved, closed)
+  const activeJobs = items.filter(item => ["assigned", "in_progress"].includes(item.status));
+  const completedJobs = items.filter(item => ["resolved", "closed"].includes(item.status));
+
   // Count metrics for worker KPIs
-  const activeCount = items.length;
-  const inProgressCount = items.filter(item => item.status === "in_progress").length;
-  const assignedCount = items.filter(item => item.status === "assigned").length;
+  const activeCount = activeJobs.length;
+  const inProgressCount = activeJobs.filter(item => item.status === "in_progress").length;
+  const completedCount = completedJobs.length;
+
+  const displayItems = activeTab === "active" ? activeJobs : completedJobs;
 
   return (
     <div className="p-6 md:p-8 space-y-6 max-w-5xl mx-auto w-full">
@@ -100,30 +106,75 @@ export default function WorkerQueuePage() {
             : "bg-white border-slate-200"
           }
         `}>
-          <span className="text-[10px] uppercase font-bold text-gray-500 tracking-wider">Awaiting Start</span>
-          <span className="text-2xl font-black text-blue-500 mt-1">{assignedCount}</span>
+          <span className="text-[10px] uppercase font-bold text-gray-500 tracking-wider">Completed Work</span>
+          <span className="text-2xl font-black text-emerald-500 mt-1">{completedCount}</span>
         </div>
       </div>
 
+      {/* Tabs Selector */}
+      <div className="flex border-b border-slate-200 dark:border-[#172026] gap-6">
+        <button
+          type="button"
+          onClick={() => setActiveTab("active")}
+          className={`pb-2.5 text-xs font-bold transition-all border-b-2 cursor-pointer
+            ${activeTab === "active"
+              ? "border-emerald-500 text-emerald-500"
+              : "border-transparent text-gray-500 hover:text-slate-800 dark:hover:text-white"
+            }
+          `}
+        >
+          Active Assignments ({activeJobs.length})
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab("completed")}
+          className={`pb-2.5 text-xs font-bold transition-all border-b-2 cursor-pointer
+            ${activeTab === "completed"
+              ? "border-emerald-500 text-emerald-500"
+              : "border-transparent text-gray-500 hover:text-slate-800 dark:hover:text-white"
+            }
+          `}
+        >
+          Completed History ({completedJobs.length})
+        </button>
+      </div>
+
       {/* Assignment List */}
-      {items.length === 0 ? (
-        <div className={`flex flex-col items-center justify-center p-12 text-center rounded-2xl border border-dashed
-          ${theme === "dark" 
-            ? "border-[#1e293b] bg-slate-900/10" 
-            : "border-slate-300 bg-slate-50/50"
-          }
-        `}>
-          <div className="p-3 bg-emerald-500/10 rounded-full text-emerald-500 mb-4 animate-pulse">
-            <CheckCircle2 size={32} />
+      {displayItems.length === 0 ? (
+        activeTab === "active" ? (
+          <div className={`flex flex-col items-center justify-center p-12 text-center rounded-2xl border border-dashed
+            ${theme === "dark" 
+              ? "border-[#1e293b] bg-slate-900/10" 
+              : "border-slate-300 bg-slate-50/50"
+            }
+          `}>
+            <div className="p-3 bg-emerald-500/10 rounded-full text-emerald-500 mb-4 animate-pulse">
+              <CheckCircle2 size={32} />
+            </div>
+            <h3 className="text-sm font-bold text-slate-900 dark:text-white">All caught up!</h3>
+            <p className="text-xs text-gray-500 max-w-xs mt-1.5 leading-relaxed">
+              No active assignments dispatched to you. When an administrator assigns a truck route or complaint, it will appear in your queue.
+            </p>
           </div>
-          <h3 className="text-sm font-bold text-slate-900 dark:text-white">All caught up!</h3>
-          <p className="text-xs text-gray-500 max-w-xs mt-1.5 leading-relaxed">
-            No active jobs dispatched to you. When an administrator assigns a truck route or complaint, it will appear in your queue.
-          </p>
-        </div>
+        ) : (
+          <div className={`flex flex-col items-center justify-center p-12 text-center rounded-2xl border border-dashed
+            ${theme === "dark" 
+              ? "border-[#1e293b] bg-slate-900/10" 
+              : "border-slate-300 bg-slate-50/50"
+            }
+          `}>
+            <div className="p-3 bg-slate-500/10 rounded-full text-slate-500 mb-4">
+              <ClipboardList size={32} />
+            </div>
+            <h3 className="text-sm font-bold text-slate-900 dark:text-white">No completed history</h3>
+            <p className="text-xs text-gray-500 max-w-xs mt-1.5 leading-relaxed">
+              Assignments resolved by you will be recorded here for auditing and proof references.
+            </p>
+          </div>
+        )
       ) : (
         <div className="space-y-4">
-          {items.map((item) => {
+          {displayItems.map((item) => {
             const coords = parseCoords(item.latitude, item.longitude);
             return (
               <div
@@ -136,7 +187,7 @@ export default function WorkerQueuePage() {
                   }
                 `}
               >
-                {/* Visual Status Indicator strip (matches Lovable list look) */}
+                {/* Visual Status Indicator strip */}
                 <div className={`absolute top-0 bottom-0 left-0 w-1
                   ${item.status === "in_progress" 
                     ? "bg-amber-500" 

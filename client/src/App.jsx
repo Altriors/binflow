@@ -7,6 +7,7 @@ import PublicOnlyRoute from "./components/PublicOnlyRoute";
 import HomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
+import ProfilePage from "./pages/ProfilePage";
 import NewComplaintPage from "./pages/NewComplaintPage";
 import MyComplaintsPage from "./pages/MyComplaintsPage";
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -59,6 +60,7 @@ export default function App() {
 
           {/* Common */}
           <Route path="/" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
+          <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
 
           {/* Citizen */}
           <Route path="/complaints/new" element={<ProtectedRoute roles={["citizen"]}><NewComplaintPage /></ProtectedRoute>} />

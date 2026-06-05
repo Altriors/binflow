@@ -19,7 +19,7 @@ router.get("/assigned", verifyToken, requireRole("worker"), getAssignedComplaint
 router.get("/map", verifyToken, requireRole("admin"), getMapComplaints);
 router.get("/", verifyToken, requireRole("admin"), getAllComplaints);
 router.get("/:id", verifyToken, getComplaintById);
-router.patch("/:id/status", verifyToken, requireRole("admin", "worker"), updateStatus);
+router.patch("/:id/status", verifyToken, requireRole("admin", "worker"), upload.single("image"), updateStatus);
 router.patch("/:id/assign", verifyToken, requireRole("admin"), assignComplaint);
 router.patch("/:id/dispatch", verifyToken, requireRole("admin"), dispatchComplaint);
 

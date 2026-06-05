@@ -121,28 +121,21 @@ export default function Navbar({ toggleSidebar, isSidebarOpen }) {
               </NavLink>
             )}
 
-            {/* Notification Bell */}
-            <button
-              className={`relative flex h-9 w-9 items-center justify-center rounded-xl border border-inherit cursor-pointer transition-colors
-                ${theme === "dark" ? "hover:bg-[#111827]" : "hover:bg-slate-100"}
+            {/* Micro User Pill linking to Profile */}
+            <Link 
+              to="/profile"
+              className={`flex items-center gap-2 rounded-xl border px-2.5 py-1 text-xs hover:border-emerald-500/50 hover:bg-slate-100/50 dark:hover:bg-[#111827]/80 hover:scale-[1.02] active:scale-95 transition-all cursor-pointer
+                ${theme === "dark"
+                  ? "bg-[#111827] border-[#1e293b] text-white"
+                  : "bg-slate-100 border-slate-200 text-slate-800"
+                }
               `}
             >
-              <Bell size={16} />
-              <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-emerald-500 ring-2 ring-inherit animate-pulse" />
-            </button>
-
-            {/* Micro User Pill */}
-            <div className={`flex items-center gap-2 rounded-xl border px-2.5 py-1 text-xs
-              ${theme === "dark"
-                ? "bg-[#111827] border-[#1e293b]"
-                : "bg-slate-100 border-slate-200"
-              }
-            `}>
-              <div className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500 text-white font-black text-[10px]">
+              <div className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500 text-white font-black text-[10px] shrink-0">
                 {user?.name?.[0]?.toUpperCase()}
               </div>
               <span className="font-semibold hidden sm:inline">{user?.name?.split(" ")[0]}</span>
-            </div>
+            </Link>
           </>
         )}
       </div>

@@ -76,6 +76,23 @@ export function AuthProvider({ children }) {
     toast.success("Logged out");
   }
 
+  async function updateProfile(payload) {
+    try {
+      const { data } = await api.put("/auth/profile", payload);
+      if (!data?.success) {
+        throw new Error(data?.message || "Profile update failed");
+      }
+      localStorage.setItem("token", data.data.token);
+      setUser(data.data.user);
+      toast.success(data.message || "Profile updated successfully");
+      return { ok: true, user: data.data.user };
+    } catch (error) {
+      const message = error?.response?.data?.message || "Profile update failed";
+      toast.error(message);
+      return { ok: false, message };
+    }
+  }
+
   const value = useMemo(
     () => ({
       user,
@@ -84,6 +101,7 @@ export function AuthProvider({ children }) {
       login,
       register,
       logout,
+      updateProfile,
     }),
     [user, loading, isAuthenticated]
   );

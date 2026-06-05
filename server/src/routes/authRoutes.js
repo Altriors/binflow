@@ -1,5 +1,5 @@
 const router = require("express").Router();
-const { register, login, getMe } = require("../controllers/authController");
+const { register, login, getMe, updateProfile } = require("../controllers/authController");
 const { verifyToken, requireRole } = require("../middleware/auth");
 const User = require("../models/User");
 const { sendSuccess, sendError } = require("../utils/response");
@@ -7,6 +7,7 @@ const { sendSuccess, sendError } = require("../utils/response");
 router.post("/register", register);
 router.post("/login", login);
 router.get("/me", verifyToken, getMe);
+router.put("/profile", verifyToken, updateProfile);
 
 // Workers list for admin dispatch
 router.get("/workers", verifyToken, requireRole("admin"), async (req, res) => {
