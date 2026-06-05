@@ -8,6 +8,7 @@ import MapPicker from "../components/MapPicker";
 import CitizenShell from "../components/citizen/CitizenShell";
 import AnimatedCard from "../components/citizen/AnimatedCard";
 import SuccessModal from "../components/citizen/SuccessModal";
+import AnimatedButton from "../components/citizen/AnimatedButton";
 import { useTheme } from "../context/ThemeContext";
 import { Camera, Send } from "lucide-react";
 
