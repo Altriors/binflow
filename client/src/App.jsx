@@ -65,10 +65,10 @@ export default function App() {
           <Route path="/complaints/my"  element={<ProtectedRoute roles={["citizen"]}><MyComplaintsPage /></ProtectedRoute>} />
 
           {/* Admin */}
-          <Route path="/admin"                    element={<LegacyWrapper><ProtectedRoute roles={["admin"]}><AdminDashboard /></ProtectedRoute></LegacyWrapper>} />
-          <Route path="/admin/complaints"         element={<LegacyWrapper><ProtectedRoute roles={["admin"]}><AdminComplaintsPage /></ProtectedRoute></LegacyWrapper>} />
-          <Route path="/admin/complaints/:id"     element={<LegacyWrapper><ProtectedRoute roles={["admin"]}><AdminComplaintDetailPage /></ProtectedRoute></LegacyWrapper>} />
-          <Route path="/admin/map"                element={<LegacyWrapper><ProtectedRoute roles={["admin"]}><AdminMapPage /></ProtectedRoute></LegacyWrapper>} />
+          <Route path="/admin"                    element={<ProtectedRoute roles={["admin"]}><AdminDashboard /></ProtectedRoute>} />
+          <Route path="/admin/complaints"         element={<ProtectedRoute roles={["admin"]}><AdminComplaintsPage /></ProtectedRoute>} />
+          <Route path="/admin/complaints/:id"     element={<ProtectedRoute roles={["admin"]}><AdminComplaintDetailPage /></ProtectedRoute>} />
+          <Route path="/admin/map"                element={<ProtectedRoute roles={["admin"]}><AdminMapPage /></ProtectedRoute>} />
 
           {/* Worker */}
           <Route path="/worker"       element={<ProtectedRoute roles={["worker"]}><WorkerQueuePage /></ProtectedRoute>} />

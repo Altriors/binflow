@@ -2,17 +2,26 @@ import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import toast from "react-hot-toast";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
-import L from "leaflet";
 import api from "../../services/api";
 import StatusBadge from "../../components/StatusBadge";
 import TruckAnimation from "../../components/TruckAnimation";
+import { useTheme } from "../../context/ThemeContext";
+import { ensureLeafletIcons, createPulseMarkerIcon } from "../../utils/leafletIcons";
+import { 
+  X, 
+  Calendar, 
+  MapPin, 
+  Truck, 
+  CheckCircle2, 
+  Clock, 
+  ShieldAlert, 
+  User, 
+  Mail, 
+  MessageSquare,
+  Navigation
+} from "lucide-react";
 
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
-  iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
-  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
-});
+ensureLeafletIcons();
 
 function formatDate(v) {
   if (!v) return "-";
@@ -28,6 +37,7 @@ const categoryLabels = {
 };
 
 export default function AdminComplaintDetailPage() {
+  const { theme } = useTheme();
   const { id } = useParams();
   const [complaint, setComplaint] = useState(null);
   const [workers, setWorkers] = useState([]);
@@ -101,83 +111,105 @@ export default function AdminComplaintDetailPage() {
     }
   }
 
-  if (loading) return <div className="loading-spinner">Loading complaint...</div>;
+  if (loading) return (
+    <div className="p-6 md:p-8 space-y-4 max-w-5xl mx-auto w-full">
+      <div className="h-10 bg-slate-800/10 dark:bg-slate-800/40 rounded-xl animate-pulse w-1/4" />
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 h-[400px] bg-slate-800/10 dark:bg-slate-800/40 rounded-2xl animate-pulse" />
+        <div className="h-[300px] bg-slate-800/10 dark:bg-slate-800/40 rounded-2xl animate-pulse" />
+      </div>
+    </div>
+  );
+
   if (!complaint) return (
-    <div className="page-wrapper">
-      <div className="empty-state"><span className="empty-state-icon">❌</span><h3>Complaint not found</h3></div>
+    <div className="p-6 md:p-8 max-w-5xl mx-auto w-full text-center">
+      <div className="p-12 border border-dashed rounded-2xl border-slate-300 dark:border-slate-800">
+        <AlertCircle className="text-red-500 mx-auto animate-bounce mb-4" size={32} />
+        <h3 className="font-bold">Complaint not found</h3>
+      </div>
     </div>
   );
 
   const hasCoords = complaint.latitude && complaint.longitude;
 
   return (
-    <div className="page-wrapper">
+    <div className="p-6 md:p-8 space-y-6 max-w-5xl mx-auto w-full">
       {showTruck && (
         <TruckAnimation autoStart onComplete={() => setShowTruck(false)} />
       )}
 
       {/* Header */}
-      <div className="animate-fade-in" style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "1rem", marginBottom: "1.5rem", flexWrap: "wrap" }}>
-        <div>
-          <Link to="/admin/complaints" style={{ fontSize: "0.85rem", color: "var(--color-text-muted)", display: "inline-flex", alignItems: "center", gap: "0.3rem", marginBottom: "0.5rem" }}>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="space-y-1">
+          <Link to="/admin/complaints" className="text-xs font-semibold text-gray-500 hover:text-emerald-500 flex items-center gap-1">
             ← All Complaints
           </Link>
-          <h2 style={{ marginBottom: "0.35rem" }}>{complaint.title}</h2>
-          <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", alignItems: "center" }}>
+          <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white mt-1">
+            {complaint.title}
+          </h2>
+          <div className="flex flex-wrap items-center gap-2 mt-1">
             <StatusBadge status={complaint.status} />
             <StatusBadge status={complaint.priority} type="priority" />
-            <span style={{ fontSize: "0.82rem", color: "var(--color-text-muted)" }}>
+            <span className="text-xs text-gray-500 font-semibold">
               {categoryLabels[complaint.category] || complaint.category}
             </span>
           </div>
         </div>
-        <div style={{ fontSize: "0.82rem", color: "var(--color-text-muted)", textAlign: "right" }}>
+        <div className="text-xs text-gray-500 sm:text-right shrink-0">
           <div>Submitted {formatDate(complaint.createdAt)}</div>
-          {complaint.resolvedAt && <div style={{ color: "var(--color-primary)" }}>Resolved {formatDate(complaint.resolvedAt)}</div>}
+          {complaint.resolvedAt && (
+            <div className="text-emerald-500 font-bold">Resolved {formatDate(complaint.resolvedAt)}</div>
+          )}
         </div>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 360px", gap: "1.25rem", alignItems: "start" }}>
-
-        {/* Left column */}
-        <div style={{ display: "grid", gap: "1.25rem" }}>
-
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+        {/* Left column details */}
+        <div className="lg:col-span-2 space-y-6">
           {/* Dispatch active banner */}
           {complaint.status === "assigned" && complaint.dispatchNote && (
-            <div className="dispatch-banner animate-fade-in">
-              <span className="dispatch-truck-icon">🚛</span>
-              <div className="dispatch-banner-content">
-                <div className="dispatch-banner-title">Truck dispatched</div>
-                <div className="dispatch-banner-sub">{complaint.dispatchNote}</div>
-                {complaint.assignedTo && (
-                  <div className="dispatch-banner-sub">Worker: {complaint.assignedTo.name}</div>
-                )}
+            <div className="flex items-center justify-between gap-4 p-4 rounded-2xl bg-blue-500/10 border border-blue-500/20 text-blue-500">
+              <div className="flex items-center gap-3">
+                <Truck className="animate-bounce shrink-0" size={20} />
+                <div className="flex flex-col text-xs">
+                  <span className="font-bold">Truck dispatched</span>
+                  <span className="text-gray-500 italic mt-0.5">"{complaint.dispatchNote}"</span>
+                  {complaint.assignedTo && (
+                    <span className="text-[10px] mt-1">Worker: {complaint.assignedTo.name}</span>
+                  )}
+                </div>
               </div>
               {complaint.estimatedArrival && (
-                <span className="dispatch-eta">ETA {complaint.estimatedArrival}</span>
+                <span className="text-[10px] font-extrabold bg-blue-500 text-white px-2 py-0.5 rounded-full shrink-0">
+                  ETA {complaint.estimatedArrival}
+                </span>
               )}
             </div>
           )}
 
           {/* Complaint details */}
-          <div className="card animate-slide-up">
-            <h3 style={{ marginBottom: "1rem" }}>Complaint Details</h3>
-            <div style={{ display: "grid", gap: "0.85rem" }}>
-              <div>
-                <div style={{ fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.04em", color: "var(--color-text-muted)", marginBottom: "0.25rem" }}>Description</div>
-                <p style={{ fontSize: "0.9rem", color: "var(--color-text)" }}>{complaint.description}</p>
+          <div className={`p-6 rounded-2xl border transition-all duration-300 space-y-4
+            ${theme === "dark" ? "bg-[#0e141a] border-[#172026] text-white" : "bg-white border-slate-200 text-slate-900"}
+          `}>
+            <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500">Complaint Details</h3>
+            <div className="space-y-4">
+              <div className="space-y-1">
+                <span className="text-[9px] uppercase text-gray-500 block font-bold">Description</span>
+                <p className="text-xs leading-relaxed text-gray-600 dark:text-gray-400 bg-slate-50 dark:bg-[#111827]/30 p-3 rounded-xl border border-slate-100 dark:border-[#1e293b]/40">
+                  {complaint.description}
+                </p>
               </div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
-                <div>
-                  <div style={{ fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.04em", color: "var(--color-text-muted)", marginBottom: "0.25rem" }}>Reported By</div>
-                  <div style={{ fontSize: "0.88rem", fontWeight: 600 }}>{complaint.userId?.name || "—"}</div>
-                  <div style={{ fontSize: "0.8rem", color: "var(--color-text-muted)" }}>{complaint.userId?.email}</div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <span className="text-[9px] uppercase text-gray-500 block font-bold">Reported By</span>
+                  <div className="text-xs font-bold">{complaint.userId?.name || "—"}</div>
+                  <div className="text-[10px] text-gray-500 font-mono mt-0.5">{complaint.userId?.email}</div>
                 </div>
-                <div>
-                  <div style={{ fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.04em", color: "var(--color-text-muted)", marginBottom: "0.25rem" }}>Location</div>
-                  <div style={{ fontSize: "0.88rem" }}>{complaint.address || "—"}</div>
-                  {complaint.ward && <div style={{ fontSize: "0.8rem", color: "var(--color-text-muted)" }}>Ward {complaint.ward}</div>}
-                  <div style={{ fontSize: "0.78rem", color: "var(--color-text-light)", fontFamily: "monospace", marginTop: "0.2rem" }}>
+                <div className="space-y-1">
+                  <span className="text-[9px] uppercase text-gray-500 block font-bold">Location Details</span>
+                  <div className="text-xs font-bold">{complaint.address || "—"}</div>
+                  {complaint.ward && <div className="text-[10px] text-gray-500 font-semibold mt-0.5">Ward {complaint.ward}</div>}
+                  <div className="text-[9px] text-gray-400 font-mono mt-1">
                     {complaint.latitude?.toFixed(5)}, {complaint.longitude?.toFixed(5)}
                   </div>
                 </div>
@@ -185,107 +217,182 @@ export default function AdminComplaintDetailPage() {
             </div>
           </div>
 
-          {/* Image */}
+          {/* Reported Image */}
           {complaint.imageUrl && (
-            <div className="card animate-slide-up" style={{ padding: 0, overflow: "hidden" }}>
-              <img src={complaint.imageUrl} alt="Complaint" style={{ width: "100%", maxHeight: 320, objectFit: "cover", display: "block" }} />
-              <div style={{ padding: "0.75rem 1rem", fontSize: "0.8rem", color: "var(--color-text-muted)" }}>
+            <div className={`rounded-2xl border overflow-hidden transition-all
+              ${theme === "dark" ? "bg-[#0e141a] border-[#172026]" : "bg-white border-slate-200"}
+            `}>
+              <img src={complaint.imageUrl} alt="Complaint" className="w-full max-h-[320px] object-cover" />
+              <div className="p-3 border-t border-slate-200 dark:border-[#172026] text-[10px] text-gray-500 font-semibold bg-slate-50/50 dark:bg-[#111827]/30">
                 Photo submitted by citizen
               </div>
             </div>
           )}
 
-          {/* Map */}
+          {/* Map picker wrapper */}
           {hasCoords && (
-            <div className="card animate-slide-up" style={{ padding: 0, overflow: "hidden" }}>
-              <div style={{ padding: "0.85rem 1rem", borderBottom: "1px solid var(--color-border)", fontWeight: 600, fontSize: "0.9rem" }}>
-                📍 Complaint Location
+            <div className={`rounded-2xl border overflow-hidden transition-all
+              ${theme === "dark" ? "bg-[#0e141a] border-[#172026]" : "bg-white border-slate-200"}
+            `}>
+              <div className="p-4 border-b border-slate-200 dark:border-[#172026] font-bold text-xs">
+                📍 Complaint Location Map
               </div>
-              <MapContainer
-                center={[complaint.latitude, complaint.longitude]}
-                zoom={15}
-                style={{ height: 260 }}
-                scrollWheelZoom={false}
-              >
-                <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-                <Marker position={[complaint.latitude, complaint.longitude]}>
-                  <Popup>{complaint.title}</Popup>
-                </Marker>
-              </MapContainer>
+              <div className="relative w-full h-[260px] overflow-hidden">
+                <MapContainer
+                  center={[complaint.latitude, complaint.longitude]}
+                  zoom={15}
+                  style={{ height: "100%", width: "100%", minHeight: 260 }}
+                  scrollWheelZoom={false}
+                >
+                  <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+                  <Marker position={[complaint.latitude, complaint.longitude]} icon={createPulseMarkerIcon()}>
+                    <Popup>{complaint.title}</Popup>
+                  </Marker>
+                </MapContainer>
+              </div>
             </div>
           )}
         </div>
 
         {/* Right column — actions */}
-        <div style={{ display: "grid", gap: "1.25rem" }}>
-
+        <div className="space-y-6">
           {/* Status update */}
-          <div className="card animate-slide-up">
-            <h3 style={{ marginBottom: "1rem" }}>Update Status</h3>
-            <form onSubmit={handleStatusUpdate} className="form-grid">
-              <div className="form-group">
-                <label className="form-label">New Status</label>
-                <select className="form-select" value={statusForm.status}
-                  onChange={e => setStatusForm(f => ({ ...f, status: e.target.value }))}>
-                  <option value="reported">Reported</option>
-                  <option value="assigned">Assigned</option>
-                  <option value="in_progress">In Progress</option>
-                  <option value="resolved">Resolved</option>
-                  <option value="closed">Closed</option>
-                </select>
+          <div className={`p-6 rounded-2xl border transition-all duration-300 space-y-4
+            ${theme === "dark" ? "bg-[#0e141a] border-[#172026] text-white" : "bg-white border-slate-200 text-slate-900"}
+          `}>
+            <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500">Update Status</h3>
+            <form onSubmit={handleStatusUpdate} className="space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-[10px] uppercase font-bold text-gray-500 tracking-wider block">New Status</label>
+                <div className="relative">
+                  <select 
+                    value={statusForm.status}
+                    onChange={e => setStatusForm(f => ({ ...f, status: e.target.value }))}
+                    className={`w-full border rounded-xl py-2 px-3.5 text-xs outline-none cursor-pointer appearance-none bg-no-repeat bg-[right_0.75rem_center] bg-[length:10px] pr-8
+                      ${theme === "dark"
+                        ? "bg-[#111827] border-[#1e293b] text-white focus:border-emerald-500/50 bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 fill=%22none%22 viewBox=%220 0 24 24%22 stroke=%22%239ca3af%22 stroke-width=%222%22%3E%3Cpath stroke-linecap=%22round%22 stroke-linejoin=%22round%22 d=%22M19.5 8.25l-7.5 7.5-7.5-7.5%22/%3E%3C/svg%3E')]"
+                        : "bg-slate-50 border-slate-200 text-slate-900 focus:border-emerald-500/50 bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 fill=%22none%22 viewBox=%220 0 24 24%22 stroke=%22%234b5563%22 stroke-width=%222%22%3E%3Cpath stroke-linecap=%22round%22 stroke-linejoin=%22round%22 d=%22M19.5 8.25l-7.5 7.5-7.5-7.5%22/%3E%3C/svg%3E')]"
+                      }
+                    `}
+                  >
+                    <option value="reported">Reported</option>
+                    <option value="assigned">Assigned</option>
+                    <option value="in_progress">In Progress</option>
+                    <option value="resolved">Resolved</option>
+                    <option value="closed">Closed</option>
+                  </select>
+                </div>
               </div>
-              <div className="form-group">
-                <label className="form-label">Comment (optional)</label>
-                <textarea className="form-textarea" rows={3}
-                  placeholder="Add a note about this status change..."
+              <div className="space-y-1.5">
+                <label className="text-[10px] uppercase font-bold text-gray-500 tracking-wider block">Comment (optional)</label>
+                <textarea 
+                  rows={2}
+                  placeholder="Add status notes..."
                   value={statusForm.comment}
                   onChange={e => setStatusForm(f => ({ ...f, comment: e.target.value }))}
-                  style={{ minHeight: 72 }} />
+                  className={`w-full border rounded-xl py-2.5 px-3 text-xs outline-none transition-all min-h-[60px] resize-y
+                    ${theme === "dark"
+                      ? "bg-[#111827] border-[#1e293b] text-white focus:border-emerald-500/50 focus:ring-2 focus:ring-emerald-500/10"
+                      : "bg-slate-50 border-slate-200 text-slate-900 focus:border-emerald-500/50 focus:ring-2 focus:ring-emerald-500/10"
+                    }
+                  `}
+                />
               </div>
-              <button type="submit" className="btn btn-primary btn-full" disabled={updatingStatus}>
-                {updatingStatus ? <><span className="btn-spinner" /> Updating...</> : "Update Status"}
+              <button 
+                type="submit" 
+                disabled={updatingStatus}
+                className="w-full flex items-center justify-center gap-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs py-2.5 shadow-md shadow-emerald-500/20 hover:-translate-y-0.5 active:translate-y-0 transition-all cursor-pointer"
+              >
+                {updatingStatus ? (
+                  <>
+                    <span className="h-3.5 w-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin shrink-0" />
+                    Updating...
+                  </>
+                ) : (
+                  "Update Status"
+                )}
               </button>
             </form>
           </div>
 
-          {/* Dispatch truck */}
-          <div className="card animate-slide-up" style={{ border: "2px solid #fcd34d", background: "linear-gradient(135deg, #fffbeb, #ffffff)" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", marginBottom: "1rem" }}>
-              <span style={{ fontSize: "1.5rem", animation: "truckRide 2s ease-in-out infinite", display: "inline-block" }}>🚛</span>
-              <h3>Dispatch Truck</h3>
+          {/* Dispatch truck card */}
+          <div className={`p-6 rounded-2xl border transition-all duration-300 space-y-4
+            ${theme === "dark"
+              ? "bg-[#0e141a]/60 border-amber-500/30 text-white"
+              : "bg-amber-500/5 border-amber-400 text-slate-900"
+            }
+          `}>
+            <div className="flex items-center gap-2">
+              <span className="text-xl animate-[truckRide_2s_ease-in-out_infinite] inline-block">🚛</span>
+              <h3 className="text-xs font-bold uppercase tracking-wider text-amber-500">Dispatch Truck</h3>
             </div>
-            <form onSubmit={handleDispatch} className="form-grid">
-              <div className="form-group">
-                <label className="form-label">Assign Worker</label>
-                <select className="form-select" value={dispatchForm.workerId}
-                  onChange={e => setDispatchForm(f => ({ ...f, workerId: e.target.value }))} required>
-                  <option value="">Select a worker...</option>
-                  {workers.map(w => (
-                    <option key={w.id} value={w.id}>{w.name}</option>
-                  ))}
-                  {workers.length === 0 && (
-                    <option disabled>No workers registered yet</option>
-                  )}
-                </select>
+            <form onSubmit={handleDispatch} className="space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-[10px] uppercase font-bold text-gray-500 tracking-wider block">Assign Worker</label>
+                <div className="relative">
+                  <select 
+                    value={dispatchForm.workerId}
+                    onChange={e => setDispatchForm(f => ({ ...f, workerId: e.target.value }))} 
+                    required
+                    className={`w-full border rounded-xl py-2 px-3.5 text-xs outline-none cursor-pointer appearance-none bg-no-repeat bg-[right_0.75rem_center] bg-[length:10px] pr-8
+                      ${theme === "dark"
+                        ? "bg-[#111827] border-[#1e293b] text-white focus:border-emerald-500/50 bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 fill=%22none%22 viewBox=%220 0 24 24%22 stroke=%22%239ca3af%22 stroke-width=%222%22%3E%3Cpath stroke-linecap=%22round%22 stroke-linejoin=%22round%22 d=%22M19.5 8.25l-7.5 7.5-7.5-7.5%22/%3E%3C/svg%3E')]"
+                        : "bg-slate-50 border-slate-200 text-slate-900 focus:border-emerald-500/50 bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 fill=%22none%22 viewBox=%220 0 24 24%22 stroke=%22%234b5563%22 stroke-width=%222%22%3E%3Cpath stroke-linecap=%22round%22 stroke-linejoin=%22round%22 d=%22M19.5 8.25l-7.5 7.5-7.5-7.5%22/%3E%3C/svg%3E')]"
+                      }
+                    `}
+                  >
+                    <option value="">Select a worker...</option>
+                    {workers.map(w => (
+                      <option key={w.id} value={w.id}>{w.name}</option>
+                    ))}
+                    {workers.length === 0 && (
+                      <option disabled>No workers registered yet</option>
+                    )}
+                  </select>
+                </div>
               </div>
-              <div className="form-group">
-                <label className="form-label">Dispatch Note</label>
-                <textarea className="form-textarea" rows={2}
+              <div className="space-y-1.5">
+                <label className="text-[10px] uppercase font-bold text-gray-500 tracking-wider block">Dispatch Note</label>
+                <textarea 
+                  rows={2}
                   placeholder="Instructions for the worker..."
                   value={dispatchForm.dispatchNote}
                   onChange={e => setDispatchForm(f => ({ ...f, dispatchNote: e.target.value }))}
-                  style={{ minHeight: 64 }} />
+                  className={`w-full border rounded-xl py-2 px-3 text-xs outline-none transition-all min-h-[50px] resize-y
+                    ${theme === "dark"
+                      ? "bg-[#111827] border-[#1e293b] text-white focus:border-emerald-500/50 focus:ring-2 focus:ring-emerald-500/10"
+                      : "bg-white border-slate-200 text-slate-900 focus:border-emerald-500/50 focus:ring-2 focus:ring-emerald-500/10"
+                    }
+                  `}
+                />
               </div>
-              <div className="form-group">
-                <label className="form-label">Estimated Arrival</label>
-                <input className="form-input" placeholder="e.g. 30 mins, 2 hours"
+              <div className="space-y-1.5">
+                <label className="text-[10px] uppercase font-bold text-gray-500 tracking-wider block">Estimated Arrival</label>
+                <input 
+                  placeholder="e.g. 30 mins, 2 hours"
                   value={dispatchForm.estimatedArrival}
-                  onChange={e => setDispatchForm(f => ({ ...f, estimatedArrival: e.target.value }))} />
+                  onChange={e => setDispatchForm(f => ({ ...f, estimatedArrival: e.target.value }))}
+                  className={`w-full border rounded-xl py-2 px-3 text-xs outline-none transition-all
+                    ${theme === "dark"
+                      ? "bg-[#111827] border-[#1e293b] text-white focus:border-emerald-500/50 focus:ring-2 focus:ring-emerald-500/10"
+                      : "bg-white border-slate-200 text-slate-900 focus:border-emerald-500/50 focus:ring-2 focus:ring-emerald-500/10"
+                    }
+                  `}
+                />
               </div>
-              <button type="submit" className="btn btn-warning btn-full" disabled={dispatching}>
-                {dispatching
-                  ? <><span className="btn-spinner" style={{ borderTopColor: "#fff" }} /> Dispatching...</>
-                  : "🚛 Dispatch Truck"}
+              <button 
+                type="submit" 
+                disabled={dispatching}
+                className="w-full flex items-center justify-center gap-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs py-2.5 shadow-md shadow-amber-500/20 hover:-translate-y-0.5 active:translate-y-0 transition-all cursor-pointer"
+              >
+                {dispatching ? (
+                  <>
+                    <span className="h-3.5 w-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin shrink-0" />
+                    Dispatching...
+                  </>
+                ) : (
+                  "🚛 Dispatch Truck"
+                )}
               </button>
             </form>
           </div>
