@@ -16,6 +16,7 @@ export default function AnimatedCard({
   delay = 0,
   hover = true,
   as = "div",
+  ...props
 }) {
   const Component = motion[as] || motion.div;
 
@@ -33,6 +34,7 @@ export default function AnimatedCard({
             }
           : undefined
       }
+      {...props}
     >
       {children}
     </Component>
