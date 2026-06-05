@@ -54,11 +54,11 @@ export default function App() {
       >
         <Routes>
           {/* Public */}
-          <Route path="/login" element={<LegacyWrapper><PublicOnlyRoute><LoginPage /></PublicOnlyRoute></LegacyWrapper>} />
-          <Route path="/register" element={<LegacyWrapper><PublicOnlyRoute><RegisterPage /></PublicOnlyRoute></LegacyWrapper>} />
+          <Route path="/login" element={<PublicOnlyRoute><LoginPage /></PublicOnlyRoute>} />
+          <Route path="/register" element={<PublicOnlyRoute><RegisterPage /></PublicOnlyRoute>} />
 
           {/* Common */}
-          <Route path="/" element={<LegacyWrapper><ProtectedRoute><HomePage /></ProtectedRoute></LegacyWrapper>} />
+          <Route path="/" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
 
           {/* Citizen */}
           <Route path="/complaints/new" element={<LegacyWrapper><ProtectedRoute roles={["citizen"]}><NewComplaintPage /></ProtectedRoute></LegacyWrapper>} />

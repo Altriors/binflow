@@ -367,7 +367,7 @@ export default function HomePage() {
             {[
               { key: "total", label: "Total Complaints", icon: ClipboardList, color: "text-slate-400 bg-slate-500/10 border-slate-500/20" },
               { key: "reported", label: "Reported Issues", icon: AlertTriangle, color: "text-red-500 bg-red-500/10 border-red-500/20" },
-              { key: "assigned", label: "Assigned Bins", icon: BlueIcon, color: "text-blue-500 bg-blue-500/10 border-blue-500/20" },
+              { key: "assigned", label: "Assigned Bins", icon: Truck, color: "text-blue-500 bg-blue-500/10 border-blue-500/20" },
               { key: "in_progress", label: "Dispatch Route", icon: Truck, color: "text-amber-500 bg-amber-500/10 border-amber-500/20" },
               { key: "resolved", label: "Resolved Today", icon: CheckCircle2, color: "text-emerald-500 bg-emerald-500/10 border-emerald-500/20" }
             ].map((s) => {

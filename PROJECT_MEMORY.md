@@ -1,6 +1,6 @@
 # BinFlow Project Memory
 
-> Cursor has no memory between sessions. This file is the single source
+> Cursor/AI has no memory between sessions. This file is the single source
 > of truth. Read it at the start of every session before writing any code.
 
 ---
@@ -26,13 +26,13 @@ with no accountability, no location intelligence, and no status tracking.
 
 | Layer | Choice |
 |---|---|
-| Frontend | React + Vite, React Router, Axios, React-Leaflet, Recharts, react-hot-toast, framer-motion, react-countup |
+| Frontend | React + Vite (v6), React Router, Axios, React-Leaflet, Recharts, react-hot-toast, framer-motion, react-countup, lucide-react |
 | Backend | Node.js, Express.js |
 | Database | MongoDB Atlas + Mongoose |
 | Auth | JWT (jsonwebtoken) + bcryptjs |
 | File uploads | Multer (memoryStorage) + Cloudinary |
 | Maps | Leaflet + OpenStreetMap (no API key needed) |
-| Styling | Plain CSS (global.css design system, Plus Jakarta Sans, animations, no Tailwind) |
+| Styling | Tailwind CSS v4 (with `@tailwindcss/vite` plugin), custom theme variables, and Framer Motion transitions. Legacy styles scoped to `legacy.css` inside `.legacy-theme` class wrapper. |
 
 ---
 
@@ -54,11 +54,12 @@ D:\PROJECTS\binflow
 │   └── src
 │       ├── components
 │       │   ├── Navbar.jsx
+│       │   ├── Sidebar.jsx             # Collapsible SaaS navigation drawer [NEW]
 │       │   ├── ProtectedRoute.jsx
 │       │   ├── PublicOnlyRoute.jsx
 │       │   ├── MapPicker.jsx
 │       │   ├── ComplaintMap.jsx
-│       │   ├── StatusBadge.jsx
+│       │   ├── StatusBadge.jsx         # Custom Tailwind v4 status badge with glowing pulse
 │       │   ├── TruckAnimation.jsx
 │       │   ├── map/
 │       │   │   ├── MapInvalidateSize.jsx
@@ -75,11 +76,12 @@ D:\PROJECTS\binflow
 │       │   ├── geolocation.js
 │       │   └── leafletIcons.js
 │       ├── context
-│       │   └── AuthContext.jsx
+│       │   ├── AuthContext.jsx
+│       │   └── ThemeContext.jsx        # Light/Dark mode state management [NEW]
 │       ├── pages
-│       │   ├── HomePage.jsx
-│       │   ├── LoginPage.jsx
-│       │   ├── RegisterPage.jsx
+│       │   ├── HomePage.jsx            # Redesigned (staged, unwrapped in Phase 2)
+│       │   ├── LoginPage.jsx           # Redesigned (staged, unwrapped in Phase 2)
+│       │   ├── RegisterPage.jsx        # Redesigned (staged, unwrapped in Phase 2)
 │       │   ├── NewComplaintPage.jsx
 │       │   ├── MyComplaintsPage.jsx
 │       │   ├── admin
@@ -88,13 +90,14 @@ D:\PROJECTS\binflow
 │       │   │   ├── AdminComplaintDetailPage.jsx
 │       │   │   └── AdminMapPage.jsx
 │       │   └── worker
-│       │       ├── WorkerQueuePage.jsx
+│       │       ├── WorkerQueuePage.jsx  # Redesigned using Tailwind CSS v4 & Lucide
 │       │       └── WorkerComplaintDetailPage.jsx
 │       ├── services
 │       │   ├── api.js
 │       │   └── complaints.js
 │       └── styles
-│           ├── global.css
+│           ├── global.css              # Overhauled to Tailwind CSS v4 setup
+│           ├── legacy.css              # Scoped CSS styles for unmigrated pages [NEW]
 │           └── citizen.css
 └── server
     ├── scripts/
@@ -149,25 +152,6 @@ CLOUDINARY_API_SECRET=your_api_secret
 REACT_APP_API_URL=http://localhost:5000
 ```
 
-> If MongoDB Atlas password contains @, encode it as %40 in MONGO_URI.
-> Never commit .env files. Both are already in .gitignore.
-
-### Windows: `querySrv ECONNREFUSED` (Node cannot resolve `mongodb+srv://`)
-
-On some Windows networks, **Node.js** fails SRV DNS while `nslookup` works. Registration and seeds then fail with `ECONNREFUSED` on `_mongodb._tcp....mongodb.net`.
-
-**Fix (already in repo):**
-
-```bash
-cd D:\PROJECTS\binflow\server
-npm run mongo:fix-uri    # rewrites MONGO_URI in .env to standard mongodb:// (3 shard hosts)
-npm run dev
-```
-
-Or in Atlas: **Connect → Drivers** → copy the **non-SRV** connection string (`mongodb://` with comma-separated hosts).
-
-**Local dev without Atlas:** `MONGO_URI=mongodb://127.0.0.1:27017/binflow` (requires MongoDB installed locally).
-
 ---
 
 ## Run Commands
@@ -189,379 +173,73 @@ npm run seed:admin
 # Seed worker account (run only once, for dispatch E2E testing)
 npm run seed:worker
 # Creates: worker@binflow.com / worker123
-
-# If MongoDB fails with querySrv ECONNREFUSED (Windows):
-npm run mongo:fix-uri
-```
-
-- Backend runs on: http://localhost:5000
-- Frontend runs on: http://localhost:5173
-- Both must run together for full app behavior
-- Vite proxy: all /api requests from frontend → http://localhost:5000
-
----
-
-## MongoDB Collections
-
-### users
-```
-name          String   required
-email         String   required, unique, lowercase
-passwordHash  String   required (never returned in responses)
-role          String   enum: citizen | admin | worker, default: citizen
-phone         String   optional
-ward          String   optional
-createdAt     Date     default: now
-```
-
-### complaints
-```
-userId            ObjectId  ref: User, required
-assignedTo        ObjectId  ref: User
-category          String    enum: overflowing_bin | missed_pickup |
-                            roadside_dumping | dead_animal | other
-title             String    required
-description       String    required
-imageUrl          String    (Cloudinary URL)
-beforeImageUrl    String
-afterImageUrl     String
-latitude          Number    required
-longitude         Number    required
-address           String
-ward              String
-status            String    enum: reported | assigned | in_progress |
-                            resolved | closed, default: reported
-priority          String    enum: low | medium | high, default: medium
-resolutionNote    String
-dispatchNote      String    admin note when dispatching truck
-estimatedArrival  String    ETA set by admin e.g. "30 mins"
-createdAt         Date
-updatedAt         Date
-resolvedAt        Date
-```
-
-### statusLogs
-```
-complaintId  ObjectId  ref: Complaint, required
-updatedBy    ObjectId  ref: User, required
-oldStatus    String
-newStatus    String    required
-comment      String
-timestamp    Date      default: now
 ```
 
 ---
 
-## API Routes
+## Migration & UI Modernization Journey
 
-```
-AUTH
-POST   /api/auth/register
-POST   /api/auth/login
-GET    /api/auth/me                     verifyToken
-GET    /api/auth/workers                admin, returns [{ id, name }]
+To build a premium eco-dark SaaS theme matching current UI trends, the project is undergoing a page-by-page styling migration to **Tailwind CSS v4** and **Framer Motion**, maintaining backend functionality and database rules completely intact.
 
-COMPLAINTS
-POST   /api/complaints                  citizen, multipart image upload
-GET    /api/complaints/my               citizen, own complaints
-GET    /api/complaints/assigned         worker, active jobs (assigned + in_progress)
-GET    /api/complaints/map              admin, lat+lng+status+category only
-GET    /api/complaints                  admin, filters: status,category,ward,from,to
-GET    /api/complaints/:id              citizen (own), admin, worker (assigned only)
-PATCH  /api/complaints/:id/status       admin + worker (in_progress / resolved only)
-PATCH  /api/complaints/:id/assign       admin
-PATCH  /api/complaints/:id/dispatch     admin, truck dispatch
-
-ADMIN
-GET    /api/admin/stats                 counts by status
-GET    /api/admin/trends                complaints per day last 30 days
-GET    /api/admin/categories            count per category
-GET    /api/admin/wards                 count per ward
-```
+### Scoping Strategy (Legacy Coexistence)
+- Unmigrated pages are wrapped in `<LegacyWrapper>` in [App.jsx](file:///d:/PROJECTS/binflow/client/src/App.jsx) which applies the class `legacy-theme`.
+- The legacy styles are isolated in [legacy.css](file:///d:/PROJECTS/binflow/client/src/styles/legacy.css) under `.legacy-theme` selectors to ensure they do not collide with new Tailwind utilities.
 
 ---
 
-## API Response Shape
+## Key Mistakes & Rectifications (From Migration Phase 1)
 
-Every response from the server follows this shape:
+During Phase 1 execution, several layout, click-event, and variable issues arose. The table below details what went wrong, why, and how they were rectified:
 
-```json
-{ "success": true, "data": {}, "message": "string" }
-```
-
----
-
-## Complaint Status Flow
-
-```
-reported → assigned → in_progress → resolved → closed
-```
-
-Every status change creates a StatusLog entry.
-
----
-
-## Dispatch Feature (Truck to Location)
-
-**Flow:**
-1. Citizen submits complaint with GPS coordinates
-2. Admin sees it on dashboard or map
-3. Admin clicks "Dispatch Truck" on the complaint
-4. Admin selects a worker, writes a dispatch note, sets ETA
-5. Frontend calls PATCH /api/complaints/:id/dispatch
-6. Server sets status = "assigned", saves assignedTo + dispatchNote + estimatedArrival
-7. StatusLog entry created: comment = "Dispatched: <note>"
-8. Worker sees complaint in their queue with coordinates to navigate to
-9. Worker updates to "in_progress" when arrived, "resolved" when done
-
-**Truck animation UX:**
-- On "Dispatch Truck" submit, overlay opens immediately with `autoStart` (no manual button)
-- Phases: arriving → loading → leaving → done, then overlay closes
-
-**Complaint model additions for this feature:**
-- dispatchNote: String
-- estimatedArrival: String
-
----
-
-## Customer Map & Geolocation (critical fixes)
-
-**MapPicker** (`/complaints/new`) — citizen pin map. Admin/worker maps use `ComplaintMap.jsx` directly.
-
-| Issue | Cause | Fix |
+| Mistake / Bug Identified | Root Cause | Rectification Applied |
 |---|---|---|
-| Grey map, no tiles | Leaflet `invalidateSize` not called inside animated/overflow parents | `MapInvalidateSize.jsx`, delayed mount, explicit `.map-picker-body` height |
-| Coords show `0.00000, 0.00000` | `parseCoords("", "")` → `Number("")` === 0 | `parseCoords` rejects empty strings and 0,0 |
-| "Use my location" timeout | `enableHighAccuracy: true` first on Windows desktop | `utils/geolocation.js` multi-step + IP fallback |
-
-**Geolocation order** (`client/src/utils/geolocation.js`):
-1. `getCurrentPosition` — low accuracy, cached OK (fast on desktop)
-2. `watchPosition` — first fix (works when getCurrentPosition hangs)
-3. `getCurrentPosition` — high accuracy, longer timeout
-4. IP approximate fallback (ipapi.co / ip-api.com) + info toast to refine on map
-
-**Manual fallback:** always click/tap map to pin — required for submit if GPS fails.
-
-**Worker navigate:** `ComplaintMap` + Google Maps directions URL on queue cards and job detail.
+| **Title Field Click Bug** | In the complaint reporting form, clicking the "Title" field triggered the image file picker. The file input's wrapper overlay was positioned absolute but lacked `position: relative` on its parent, stretching the invisible file input over the entire card. | Added explicit `position: relative` to the wrapper class `.file-input-wrapper` inside `legacy.css` to restrict the file input overlay boundaries. |
+| **Blank/Invisible Customer Map & Blobs** | Commenting out `citizen.css` to migrate to Tailwind broke the Leaflet Map Picker tiles and background blobs. Visual assets and Leaflet components relied on specific selectors and global CSS variables. | Restored layout CSS rules and Leaflet styles by scoping them under `.legacy-theme` within `legacy.css` so that the map initializes and loads tile images correctly. |
+| **Admin Stats Page `BlueIcon` Reference Crash** | In the updated statistics metrics array inside [HomePage.jsx](file:///d:/PROJECTS/binflow/client/src/pages/HomePage.jsx#L370), `BlueIcon` was defined but never imported. Evaluating it in the object literal throws a fatal `ReferenceError`. | Replaced the undefined `BlueIcon` with a valid Lucide icon `Truck` to ensure the Home component loads safely without runtime crashes. |
+| **Global Theme Collision** | Introducing dark/light mode toggling caused unmigrated pages to lose contrast or display text as white on white or dark on dark. | Built the `<LegacyWrapper>` component to scope unmigrated page elements. Applied a structured dark/light variable set in `global.css` that maps correctly to system backgrounds. |
 
 ---
 
-## Middleware
+## Project Status & Checkpoint
 
-```
-verifyToken         Reads Authorization: Bearer <token>
-                    Verifies with JWT_SECRET
-                    Attaches decoded payload to req.user
-                    Returns 401 if missing or invalid
-
-requireRole(...roles)
-                    Checks req.user.role is in roles array
-                    Returns 403 if not authorized
-```
+- **Current Git Checkpoint**: Commit `d33e25c` ("checkpoint: save progress before phase 2 migration") is committed on the `main` branch.
+- **Vite Build**: Compiles cleanly with zero errors/warnings.
 
 ---
 
-## Frontend Pages Built
+## What Is Next (UI Migration Roadmap)
 
-| Page | Path | Role | Status |
-|---|---|---|---|
-| Landing / Dashboard | / | all | done |
-| Login | /login | public only | done |
-| Register | /register | public only | done |
-| New Complaint | /complaints/new | citizen | done |
-| My Complaints | /complaints/my | citizen | done |
-| Admin Dashboard | /admin | admin | done |
-| All Complaints (admin) | /admin/complaints | admin | done |
-| Complaint Detail + Dispatch | /admin/complaints/:id | admin | done |
-| Map Intelligence | /admin/map | admin | done |
-| Worker Queue | /worker | worker | done |
-| Worker Job Detail | /worker/:id | worker | done |
+### Phase 2: Core Entry & Landing Pages [Active Phase]
+1. **Unwrap Routes**: In [App.jsx](file:///d:/PROJECTS/binflow/client/src/App.jsx), unwrap the routes `/login`, `/register`, and `/` (Home) from `<LegacyWrapper>` to render them using the new Tailwind v4 styling.
+2. **HomePage Redesign Fixes**: Clean up `HomePage.jsx` variables (e.g., replacement of `BlueIcon` with `Truck`).
+3. **Parity Check**: Open `/login`, `/register`, and `/` in browser. Verify card glassmorphism, responsive forms, focus outlines, loading spin states, and theme color switches.
 
----
+### Phase 3: Citizen Pages
+- Redesign `NewComplaintPage.jsx` (modern layout, upload dropzone, MapPicker).
+- Redesign `MyComplaintsPage.jsx` (complaint detail drawer, history timeline).
 
-## Frontend Components Built
+### Phase 4: Admin Dashboard & Actions
+- Redesign `AdminDashboard.jsx` (responsive statistics grids, animated count-ups, charts).
+- Redesign `AdminComplaintsPage.jsx` (table rows, action dropdowns, loader shimmers).
+- Redesign `AdminComplaintDetailPage.jsx` (dispatch actions overlay, Leaflet worker tracker).
+- Redesign `AdminMapPage.jsx` (fullscreen status filters).
 
-| Component | Purpose | Status |
-|---|---|---|
-| Navbar.jsx | Top nav with role-aware links | done |
-| ProtectedRoute.jsx | Redirect to /login if not authed | done |
-| PublicOnlyRoute.jsx | Redirect to / if already authed | done |
-| MapPicker.jsx | Leaflet map with click-to-pin + geolocation (flyTo + errors) | done |
-| ComplaintMap.jsx | Read-only map + Google Maps Navigate link | done |
-| StatusBadge.jsx | Colored pill for status and priority | done |
-| TruckAnimation.jsx | Full-screen truck animation on dispatch (autoStart) | done |
-| map/MapInvalidateSize.jsx | Fixes blank Leaflet tiles after layout/animation | done |
-| map/MapLoader.jsx | Shimmer while map initializes | done |
-| citizen/* | Framer Motion shell, cards, success modal, floating bg | done |
+### Phase 5: Worker Detail View
+- Redesign `WorkerComplaintDetailPage.jsx` (quick actions, status buttons, directions links).
 
----
-
-## CSS Design System
-
-**Files:** `global.css` (base + admin/worker) + `citizen.css` (citizen premium layer). No Tailwind.
-
-Key CSS variables (global.css):
-```
---color-primary: #059669
---color-bg: #e8f5ec
---color-surface: #ffffff
---gradient-brand: teal → emerald → sky
---radius-lg: 16px
---shadow-md / --shadow-card-hover
-```
-Font: **Plus Jakarta Sans** (loaded in index.html).
-
-Key utility classes:
-```
-.card             white surface with border + shadow
-.form-card        centered auth form card
-.form-group       label + input stack
-.form-input       styled input
-.form-select      styled select with arrow
-.btn              base button
-.btn-primary      blue filled
-.btn-secondary    white outlined
-.btn-sm / lg      size variants
-.btn-full         100% width
-.btn-spinner      loading spinner inside button
-.badge            pill label
-.badge-{status}   color per complaint status
-.complaint-card   hover card for complaint list
-.auth-page        centered full-height auth layout
-.loading-spinner  animated loading state
-.empty-state      centered empty list state
-.stats-grid       responsive stats row
-.page-wrapper     max-width centered content area
-```
-
----
-
-## Known Issues Fixed
-
-| Issue | Fix |
-|---|---|
-| CSS build error: unclosed bracket in .form-select | Replaced %3E/%3C encoded SVG with raw < > in data URL |
-| MapPicker build error: default export not found | File was not saved correctly, re-created with export default |
-| Leaflet marker icon broken in Vite | `utils/leafletIcons.js` — shared icon fix + pulse marker |
-| Customer map blank / grey tiles | `MapInvalidateSize` + map in separate `card-map-panel` (overflow visible) |
-| Geolocation timeout on Windows | `utils/geolocation.js` — low accuracy first, watchPosition, IP fallback |
-| MongoDB querySrv ECONNREFUSED | `npm run mongo:fix-uri` converts mongodb+srv → mongodb:// in .env |
-
----
-
-## Project Status (MVP)
-
-**Complete end-to-end:** citizen reports → admin dispatches → worker resolves. All three roles have dashboards, maps (where needed), and auth.
-
-**Test accounts:**
-| Role | Email | Password |
-|---|---|---|
-| Admin | admin@binflow.com | admin123 |
-| Worker | worker@binflow.com | worker123 |
-| Citizen | register at /register | — |
-
----
-
-## Git Convention
-
-```
-Branches:
-main            stable, milestone releases only
-dev             working integration branch
-feature/<name>  individual features, branch off dev
-
-Commit format:
-feat:      new feature
-fix:       bug fix
-style:     UI/CSS only
-refactor:  code restructure, no behavior change
-chore:     config, deps, tooling
-```
-
----
-
-## Server Implementation Rules
-
-These rules apply to all server code:
-- async/await everywhere, never .then() chains
-- All controllers wrapped in try/catch
-- Use sendSuccess() and sendError() from utils/response.js
-- Never return passwordHash in any response
-- Image upload flow: multer memoryStorage → cloudinaryUpload service → save URL in DB
-- JWT expires in 7d
-- bcryptjs salt rounds: 10
-- All protected routes use verifyToken
-- Role-restricted routes use requireRole after verifyToken
-
----
-
-## End-to-End Test Flow (three roles)
-
-Use this checklist after any dispatch/worker changes:
-
-1. **Citizen** — register or login, submit complaint at `/complaints/new` with map pin + photo
-2. **Admin** — `admin@binflow.com` / `admin123`, open `/admin/complaints/:id`, select worker from dropdown (requires `npm run seed:worker`), dispatch with note + ETA → truck animation plays
-3. **Worker** — `worker@binflow.com` / `worker123`, open `/worker`, see job card, open detail, map shows location, tap In Progress then Resolved
-
----
-
-## What Is Done
-
-- [x] Project scaffolded and pushed to GitHub
-- [x] Frontend: global.css full design system (2025 UI refresh — gradients, glass, animations)
-- [x] Frontend: Navbar with role-aware links
-- [x] Frontend: Auth pages (Login, Register) with form styling
-- [x] Frontend: AuthContext with JWT login/register/logout
-- [x] Frontend: ProtectedRoute and PublicOnlyRoute
-- [x] Frontend: NewComplaintPage with MapPicker + image upload
-- [x] Frontend: MyComplaintsPage with complaint cards + status badges
-- [x] Frontend: HomePage with dashboard shell + quick actions
-- [x] Frontend: Vite proxy /api → localhost:5000
-- [x] Frontend: TruckAnimation auto-plays on dispatch submit
-- [x] Frontend: WorkerQueuePage — assigned jobs list with dispatch note + ETA
-- [x] Frontend: WorkerComplaintDetailPage — map, status buttons (in_progress / resolved)
-- [x] Frontend: Worker routes in App.jsx + Navbar "My Queue"
-- [x] Frontend: HomePage worker dashboard stats + quick action
-- [x] Server: GET /api/auth/workers (id + name for admin dropdown)
-- [x] Server: GET /api/complaints/assigned for worker queue
-- [x] Server: Worker-scoped access on getComplaintById + updateStatus
-- [x] Server: seed:worker script (worker@binflow.com / worker123)
-- [x] Frontend: AdminDashboard with real stats + Recharts analytics
-- [x] Frontend: AdminComplaintsPage with filters + complaints table
-- [x] Frontend: AdminComplaintDetailPage with dispatch truck UI
-- [x] Frontend: AdminMapPage with complaint pins + filters
-- [x] Server: All files scaffolded (config, controllers, middleware, models, routes, services, utils)
-- [x] Server: All controllers, middleware, models implemented
-- [x] Server: Dispatch feature added to Complaint model schema
-- [x] Server: authRoutes updated
-- [x] Seed script working: admin@binflow.com / admin123
-- [x] Full stack working end to end — citizen flow confirmed
-- [x] Complaint saved to MongoDB Atlas, image saved to Cloudinary
-- [x] Git pushed to main
-- [x] Three-role E2E flow (citizen → admin dispatch → worker queue)
-- [x] GET /api/auth/workers + GET /api/complaints/assigned
-- [x] Customer map tile rendering + parseCoords fix
-- [x] Geolocation helper (GPS + watchPosition + IP fallback)
-- [x] Citizen UI: framer-motion, citizen.css, SuccessModal, AnimatedCard/Counter
-- [x] Worker Google Maps navigate buttons
-- [x] Windows MongoDB fix script (mongo:fix-uri)
-
-## What Is Next (Phase 2 — optional enhancements)
-
-- [ ] Duplicate detection — haversine ~100–200 m on citizen submit
-- [ ] SLA escalation — node-cron; priority → high if reported/assigned > 48h
-- [ ] Notifications collection
-- [ ] Mobile layout pass and device testing
-- [ ] Worker resolution proof photo upload
+### Phase 6: Worker Resolution Photo Upload Feature
+- **Backend**: Update `PATCH /api/complaints/:id/status` endpoint in Express controller to accept multipart uploads via multer, saving resolution photos to Cloudinary.
+- **Frontend**: Create file selection form for workers resolving complaints. Add parallel view panes in Citizen & Admin details to view "Reported Image" and "Worker Resolution Proof".
 
 ---
 
 ## Resume Prompt
 
-Copy this into Cursor at the start of every new session:
+Copy this into the AI agent chat at the start of the next session:
 
 ```
-Read PROJECT_MEMORY.md fully before doing anything.
-Check "What Is Next" and start with the first unchecked item.
-Do not touch files marked done unless asked.
+Read PROJECT_MEMORY.md fully. Proceed with Phase 2 of the UI migration:
+1. Unwrap /login, /register, and / (Home) routes from <LegacyWrapper> in App.jsx.
+2. Fix the BlueIcon bug in HomePage.jsx.
+3. Build the application (npm run build) and perform visual check of these entry pages.
 ```
